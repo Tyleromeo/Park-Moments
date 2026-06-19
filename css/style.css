@@ -373,7 +373,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
+  width: 38px;
+  min-height: 44px;
   flex-shrink: 0;
   border: none;
   background: transparent;
@@ -382,6 +383,8 @@ body {
   color: var(--border-md);
   transition: color 0.15s, transform 0.1s;
   -webkit-tap-highlight-color: transparent;
+  position: relative;
+  z-index: 2;
 }
 
 .star-btn:hover {

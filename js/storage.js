@@ -165,21 +165,22 @@ const Storage = {
   },
 
   // Total "activity count" — every checked item counts at least once,
-  // plus any extra times logged via the ride counter. Broken down by
-  // badge category (thrill/family/show/food/character) and a grand total.
+  // plus any extra times logged via the ride counter. Rides (thrill +
+  // family combined) get one tally, shows and food stay separate.
   // e.g. Cosmic Rewind checked + ridden 2 extra times = 3, Remy's = 2 → total 5.
   getActivityTally(parkId) {
     const park = PARKS.find(p => p.id === parkId);
     const checks = this.getChecked();
     const counts = this.getCounts();
-    const byCategory = { thrill: 0, family: 0, show: 0, food: 0, character: 0 };
+    const byCategory = { rides: 0, show: 0, food: 0, character: 0 };
     let total = 0;
 
     park?.sections.forEach(s => s.items.forEach(item => {
       if (!checks[item.id]) return;
       const times = 1 + (counts[item.id] || 0);
       total += times;
-      if (byCategory[item.badge] !== undefined) byCategory[item.badge] += times;
+      const key = (item.badge === 'thrill' || item.badge === 'family') ? 'rides' : item.badge;
+      if (byCategory[key] !== undefined) byCategory[key] += times;
     }));
 
     return { total, byCategory };

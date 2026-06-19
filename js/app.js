@@ -52,8 +52,7 @@ function renderPark() {
   const main = document.getElementById('main-content');
 
   const TALLY_LABELS = {
-    thrill: { label: 'Rides', emoji: '🎢' },
-    family: { label: 'Family rides', emoji: '🎠' },
+    rides: { label: 'Rides', emoji: '🎢' },
     show: { label: 'Shows', emoji: '🎭' },
     food: { label: 'Food & drink', emoji: '🍽️' },
     character: { label: 'Character meets', emoji: '👋' },
@@ -181,7 +180,9 @@ function renderPark() {
   // Bind star buttons
   main.querySelectorAll('.star-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
+      e.preventDefault();
       e.stopPropagation();
+      e.stopImmediatePropagation();
       toggleStar(btn.dataset.id);
     });
   });
