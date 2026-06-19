@@ -692,9 +692,17 @@ function buildRecapCanvas(summary) {
   const W = 900;
   const CARD_PADDING = 40;
   const HEADER_H = 220;
-  const PARK_CARD_H = 200;
+  const PARK_CARD_BASE_H = 100; // header area within each park card before the list starts
+  const LINE_H = 19;
+  const MAX_LINES_SHOWN = 8;
   const FOOTER_H = 70;
-  const H = HEADER_H + summary.parkSummaries.length * PARK_CARD_H + FOOTER_H + 40;
+
+  const parkCardHeights = summary.parkSummaries.map(ps => {
+    const lines = Math.min(ps.timeline.length, MAX_LINES_SHOWN) || 1;
+    return PARK_CARD_BASE_H + lines * LINE_H + 20;
+  });
+  const totalParkH = parkCardHeights.reduce((a, b) => a + b, 0);
+  const H = HEADER_H + totalParkH + FOOTER_H + 40;
 
   const canvas = document.createElement('canvas');
   const scale = 2; // render at 2x for crisp text, then downscale via CSS-free export
@@ -766,13 +774,14 @@ function buildRecapCanvas(summary) {
   summary.parkSummaries.forEach((ps, i) => {
     const park = ps.park;
     const cardY = y;
+    const cardH = parkCardHeights[i];
     const isEven = i % 2 === 0;
     ctx.fillStyle = isEven ? '#ffffff' : '#f7f6f3';
-    ctx.fillRect(0, cardY, W, PARK_CARD_H);
+    ctx.fillRect(0, cardY, W, cardH);
 
     // Accent bar
     ctx.fillStyle = park.accentColor;
-    ctx.fillRect(0, cardY, 6, PARK_CARD_H);
+    ctx.fillRect(0, cardY, 6, cardH);
 
     // Park name + emoji
     ctx.fillStyle = '#1a1814';
@@ -798,23 +807,25 @@ function buildRecapCanvas(summary) {
     ctx.fillStyle = '#6b6760';
     ctx.fillText(breakdown || 'No activities logged', CARD_PADDING, cardY + 70);
 
-    // List up to 5 checked items
+    // Chronological timeline with timestamps
     ctx.font = '400 13px "DM Sans", sans-serif';
-    ctx.fillStyle = '#3a3630';
-    const itemsToShow = ps.checkedItems.slice(0, 5);
-    itemsToShow.forEach((item, idx) => {
-      const lineY = cardY + 100 + idx * 19;
-      const timesLabel = item.times > 1 ? ` (×${item.times})` : '';
-      let label = `• ${item.name}${timesLabel}`;
-      if (label.length > 78) label = label.slice(0, 75) + '…';
-      ctx.fillText(label, CARD_PADDING + 4, lineY);
-    });
-    if (ps.checkedItems.length > 5) {
+    const itemsToShow = ps.timeline.slice(0, MAX_LINES_SHOWN);
+    itemsToShow.forEach((entry, idx) => {
+      const lineY = cardY + 100 + idx * LINE_H;
       ctx.fillStyle = '#9e9b96';
-      ctx.fillText(`+ ${ps.checkedItems.length - 5} more`, CARD_PADDING + 4, cardY + 100 + 5 * 19);
+      ctx.fillText(entry.timeLabel, CARD_PADDING + 4, lineY);
+      const timeW = ctx.measureText(entry.timeLabel + '  ').width;
+      ctx.fillStyle = '#3a3630';
+      let nameLabel = entry.name + (entry.isExtra ? ' (again)' : '');
+      if (nameLabel.length > 60) nameLabel = nameLabel.slice(0, 57) + '…';
+      ctx.fillText(nameLabel, CARD_PADDING + 4 + timeW, lineY);
+    });
+    if (ps.timeline.length > MAX_LINES_SHOWN) {
+      ctx.fillStyle = '#9e9b96';
+      ctx.fillText(`+ ${ps.timeline.length - MAX_LINES_SHOWN} more`, CARD_PADDING + 4, cardY + 100 + MAX_LINES_SHOWN * LINE_H);
     }
 
-    y += PARK_CARD_H;
+    y += cardH;
   });
 
   // ── Footer ──
@@ -975,23 +986,25 @@ function exportRecapPDF() {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(30, 28, 24);
-    doc.text('What you did', margin, y);
+    doc.text('Timeline of the day', margin, y);
     y += 20;
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(11);
-    ps.checkedItems.forEach(item => {
+    ps.timeline.forEach(entry => {
       if (y > pageH - margin) {
         doc.addPage();
         y = margin;
       }
-      const timesLabel = item.times > 1 ? `  (ridden ${item.times}×)` : '';
+      const label = entry.isExtra ? `${entry.name} (again)` : entry.name;
+      doc.setTextColor(150, 150, 150);
+      doc.text(entry.timeLabel, margin, y);
       doc.setTextColor(40, 40, 40);
-      doc.text(`•  ${item.name}${timesLabel}`, margin, y);
+      doc.text(label, margin + 65, y);
       y += 18;
     });
 
-    if (ps.checkedItems.length === 0) {
+    if (ps.timeline.length === 0) {
       doc.setTextColor(150, 150, 150);
       doc.text('Nothing logged here yet.', margin, y);
     }

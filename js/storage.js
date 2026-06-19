@@ -21,7 +21,7 @@ function uid() {
 }
 
 function emptyTripData() {
-  return { checks: {}, counts: {}, songs: {}, stars: {}, notes: {}, activePark: PARKS[0].id, activeResort: null };
+  return { checks: {}, counts: {}, songs: {}, stars: {}, notes: {}, activePark: PARKS[0].id, activeResort: null, timeline: [] };
 }
 
 const Storage = {
@@ -133,6 +133,9 @@ const Storage = {
     const tripId = this.ensureActiveTrip();
     const allData = this.getAllTripsData();
     if (!allData[tripId]) allData[tripId] = emptyTripData();
+    // Migration safety net: trips created before the timeline feature
+    // existed won't have this field yet — backfill it so nothing breaks.
+    if (!allData[tripId].timeline) allData[tripId].timeline = [];
     return allData[tripId];
   },
   _saveTripData(data) {
@@ -155,19 +158,31 @@ const Storage = {
     const data = this._getTripData();
     data.checks[id] = !data.checks[id];
     const newState = data.checks[id];
+    if (newState) {
+      // Just checked on — log the moment it happened
+      data.timeline.push({ itemId: id, ts: Date.now() });
+    } else {
+      // Unchecked — remove its most recent timeline entry so the
+      // timeline stays accurate if someone taps it off by mistake
+      const idx = data.timeline.map(e => e.itemId).lastIndexOf(id);
+      if (idx !== -1) data.timeline.splice(idx, 1);
+    }
     this._saveTripData(data);
     return newState;
   },
   clearPark(parkId) {
     const data = this._getTripData();
+    const idsInPark = new Set();
     PARKS.find(p => p.id === parkId)?.sections.forEach(s =>
       s.items.forEach(i => {
         delete data.checks[i.id];
         delete data.counts[i.id];
         delete data.songs[i.id];
         delete data.stars[i.id];
+        idsInPark.add(i.id);
       })
     );
+    data.timeline = data.timeline.filter(e => !idsInPark.has(e.itemId));
     this._saveTripData(data);
   },
 
@@ -211,6 +226,7 @@ const Storage = {
   incrementCount(id) {
     const data = this._getTripData();
     data.counts[id] = (data.counts[id] || 0) + 1;
+    data.timeline.push({ itemId: id, ts: Date.now(), isExtra: true });
     this._saveTripData(data);
     return data.counts[id];
   },
@@ -218,6 +234,9 @@ const Storage = {
     const data = this._getTripData();
     data.counts[id] = Math.max(0, (data.counts[id] || 0) - 1);
     if (data.counts[id] === 0) delete data.counts[id];
+    // Remove the most recent "extra ride" timeline entry for this item
+    const idx = data.timeline.map(e => e.itemId + (e.isExtra ? ':extra' : '')).lastIndexOf(id + ':extra');
+    if (idx !== -1) data.timeline.splice(idx, 1);
     this._saveTripData(data);
     return data.counts[id] || 0;
   },
@@ -316,6 +335,14 @@ const Storage = {
 
     const checks = this.getChecked();
     const counts = this.getCounts();
+    const timeline = this._getTripData().timeline || [];
+
+    // Build a quick lookup from itemId -> the park it belongs to, so
+    // timeline entries (which only know itemId) can be grouped by park.
+    const itemToPark = {};
+    PARKS.forEach(park => park.sections.forEach(s => s.items.forEach(item => {
+      itemToPark[item.id] = park.id;
+    })));
 
     PARKS.forEach(park => {
       const tally = this.getActivityTally(park.id);
@@ -335,10 +362,27 @@ const Storage = {
       grandTotal += tally.total;
       Object.keys(grandByCategory).forEach(k => { grandByCategory[k] += tally.byCategory[k]; });
 
+      // This park's timeline, in chronological order, with names resolved
+      // and clock times formatted for display.
+      const parkTimeline = timeline
+        .filter(e => itemToPark[e.itemId] === park.id)
+        .sort((a, b) => a.ts - b.ts)
+        .map(e => {
+          const item = park.sections.flatMap(s => s.items).find(i => i.id === e.itemId);
+          return {
+            name: item ? item.name : 'Unknown',
+            badge: item ? item.badge : 'family',
+            time: e.ts,
+            timeLabel: new Date(e.ts).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+            isExtra: !!e.isExtra,
+          };
+        });
+
       parkSummaries.push({
         park,
         tally,
         checkedItems,
+        timeline: parkTimeline,
       });
     });
 
