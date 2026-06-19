@@ -8,6 +8,7 @@ const STORAGE_KEY_NOTES  = 'rd_notes_v1';
 const STORAGE_KEY_PARK   = 'rd_active_park_v1';
 const STORAGE_KEY_COUNTS = 'rd_counts_v1';
 const STORAGE_KEY_SONGS  = 'rd_songs_v1';
+const STORAGE_KEY_STARS  = 'rd_stars_v1';
 
 const Storage = {
   // --- Checks (which items are ticked) ---
@@ -29,15 +30,18 @@ const Storage = {
     const checks = this.getChecked();
     const counts = this.getCounts();
     const songs = this.getSongs();
+    const stars = this.getStars();
     PARKS.find(p => p.id === parkId)?.sections.forEach(s =>
       s.items.forEach(i => {
         delete checks[i.id];
         delete counts[i.id];
         delete songs[i.id];
+        delete stars[i.id];
       })
     );
     this.setChecked(checks);
     this.setCounts(counts);
+    this.setStars(stars);
     localStorage.setItem(STORAGE_KEY_SONGS, JSON.stringify(songs));
   },
 
@@ -110,6 +114,26 @@ const Storage = {
       if (songs[id].length === 0) delete songs[id];
       localStorage.setItem(STORAGE_KEY_SONGS, JSON.stringify(songs));
     }
+  },
+
+  // --- Personal stars (your own must-dos) ---
+  getStars() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY_STARS) || '{}');
+    } catch { return {}; }
+  },
+  setStars(obj) {
+    localStorage.setItem(STORAGE_KEY_STARS, JSON.stringify(obj));
+  },
+  isStarred(id) {
+    return !!this.getStars()[id];
+  },
+  toggleStar(id) {
+    const stars = this.getStars();
+    stars[id] = !stars[id];
+    if (!stars[id]) delete stars[id];
+    this.setStars(stars);
+    return !!stars[id];
   },
 
   // --- Stats helper ---

@@ -69,15 +69,30 @@ function renderPark() {
   park.sections.forEach(section => {
     html += `<div class="section"><h2 class="section-heading">${section.name}</h2>`;
 
-    section.items.forEach(item => {
+    // Starred items float to the top of their section, original order preserved otherwise
+    const sortedItems = [...section.items].sort((a, b) => {
+      const aStar = Storage.isStarred(a.id) ? 1 : 0;
+      const bStar = Storage.isStarred(b.id) ? 1 : 0;
+      return bStar - aStar;
+    });
+
+    sortedItems.forEach(item => {
       const isDone = !!checks[item.id];
       const badge = BADGE_CONFIG[item.badge] || BADGE_CONFIG.family;
       const count = Storage.getCount(item.id);
       const hasSongPicker = !!SONG_PICKERS[item.id];
       const songLog = Storage.getSongLog(item.id);
+      const isStarred = Storage.isStarred(item.id);
 
       html += `
         <div class="item-row${isDone ? ' item-done' : ''}" data-id="${item.id}">
+          <button
+            class="star-btn${isStarred ? ' starred' : ''}"
+            data-id="${item.id}"
+            aria-pressed="${isStarred}"
+            aria-label="${isStarred ? 'Remove from your must-dos' : 'Add to your must-dos'}"
+            title="${isStarred ? 'Your must-do' : 'Mark as your must-do'}"
+          >${isStarred ? '★' : '☆'}</button>
           <button
             class="item"
             data-id="${item.id}"
@@ -88,7 +103,7 @@ function renderPark() {
               ${isDone ? `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>` : ''}
             </span>
             <span class="item-body">
-              <span class="item-name">${item.must ? '<span class="must-star" aria-label="must-do">★</span> ' : ''}${item.name}</span>
+              <span class="item-name">${item.name}</span>
               <span class="item-meta">${item.meta}${songLog.length ? ` · <span class="song-tag-inline">${songLog[songLog.length - 1]}</span>` : ''}</span>
             </span>
             <span class="badge ${badge.cls}">${badge.label}</span>
@@ -133,6 +148,14 @@ function renderPark() {
   `;
 
   main.innerHTML = html;
+
+  // Bind star buttons
+  main.querySelectorAll('.star-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleStar(btn.dataset.id);
+    });
+  });
 
   // Bind item taps (the main check toggle)
   main.querySelectorAll('.item').forEach(btn => {
@@ -209,6 +232,11 @@ function toggleItem(id) {
       openSongPicker(id);
     }
   }
+}
+
+function toggleStar(id) {
+  Storage.toggleStar(id);
+  renderPark();
 }
 
 function bumpCount(id, direction) {
