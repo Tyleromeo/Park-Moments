@@ -95,10 +95,15 @@ function renderPark() {
           </button>
           <div class="item-extras">
             ${isDone ? `
-              <button class="count-btn" data-id="${item.id}" title="Add another ride">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-                ${count > 0 ? `<span class="count-num">${count + 1}×</span>` : ''}
-              </button>
+              <div class="count-stepper">
+                <button class="count-minus" data-id="${item.id}" title="Remove a ride" ${count === 0 ? 'disabled' : ''}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg>
+                </button>
+                <span class="count-display">${count + 1}×</span>
+                <button class="count-plus" data-id="${item.id}" title="Add another ride">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                </button>
+              </div>
             ` : ''}
             ${isDone && hasSongPicker ? `
               <button class="song-btn" data-id="${item.id}" title="Log which song you got">
@@ -134,11 +139,17 @@ function renderPark() {
     btn.addEventListener('click', () => toggleItem(btn.dataset.id));
   });
 
-  // Bind count buttons
-  main.querySelectorAll('.count-btn').forEach(btn => {
+  // Bind count stepper buttons
+  main.querySelectorAll('.count-plus').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      bumpCount(btn.dataset.id);
+      bumpCount(btn.dataset.id, 1);
+    });
+  });
+  main.querySelectorAll('.count-minus').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      bumpCount(btn.dataset.id, -1);
     });
   });
 
@@ -200,10 +211,14 @@ function toggleItem(id) {
   }
 }
 
-function bumpCount(id) {
-  Storage.incrementCount(id);
+function bumpCount(id, direction) {
+  if (direction > 0) {
+    Storage.incrementCount(id);
+    showToast('Logged another ride 🎢');
+  } else {
+    Storage.decrementCount(id);
+  }
   renderPark();
-  showToast('Logged another ride 🎢');
 }
 
 function findItemById(id) {

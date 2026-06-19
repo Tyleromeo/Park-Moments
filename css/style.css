@@ -388,31 +388,71 @@ body {
   flex-shrink: 0;
 }
 
-.count-btn,
+.count-stepper {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-md);
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.count-minus,
+.count-plus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background 0.12s;
+  flex-shrink: 0;
+}
+
+.count-minus:hover:not(:disabled),
+.count-plus:hover {
+  background: var(--bg-2);
+  color: var(--text-1);
+}
+
+.count-minus:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.count-display {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-1);
+  padding: 0 4px;
+  min-width: 22px;
+  text-align: center;
+}
+
 .song-btn {
   display: flex;
   align-items: center;
   gap: 3px;
   height: 32px;
-  padding: 0 9px;
+  padding: 0 8px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--border-md);
   background: var(--bg);
   color: var(--text-2);
   cursor: pointer;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 13px;
   white-space: nowrap;
   transition: background 0.12s, border-color 0.12s;
 }
 
-.count-btn:hover,
 .song-btn:hover {
   background: var(--bg-2);
   border-color: var(--text-3);
 }
-
-.song-btn { font-size: 13px; padding: 0 8px; }
 
 .count-num {
   font-size: 11px;
