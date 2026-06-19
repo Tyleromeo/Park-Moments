@@ -259,7 +259,8 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   padding: 11px 12px;
   border-radius: var(--radius-sm);
   border: none;
@@ -268,7 +269,6 @@ body {
   text-align: left;
   transition: background 0.1s;
   -webkit-tap-highlight-color: transparent;
-  margin-bottom: 2px;
 }
 
 .item:hover { background: var(--bg-2); }
@@ -368,6 +368,198 @@ body {
 .notes-input:focus { border-color: var(--border-md); box-shadow: 0 0 0 3px rgba(0,0,0,0.05); }
 
 .bottom-spacer { height: 24px; }
+
+/* ── Item row (wraps item + extras) ── */
+.item-row {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
+.item-row.item-done .item {
+  opacity: 0.5;
+}
+
+.item-extras {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.count-btn,
+.song-btn {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 32px;
+  padding: 0 9px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-md);
+  background: var(--bg);
+  color: var(--text-2);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.count-btn:hover,
+.song-btn:hover {
+  background: var(--bg-2);
+  border-color: var(--text-3);
+}
+
+.song-btn { font-size: 13px; padding: 0 8px; }
+
+.count-num {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-1);
+}
+
+.song-tag-inline {
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 300;
+  animation: fadeIn 0.15s ease-out;
+}
+
+@media (min-width: 520px) {
+  .modal-overlay { align-items: center; }
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal-card {
+  background: var(--bg);
+  width: 100%;
+  max-width: 480px;
+  max-height: 80vh;
+  overflow-y: auto;
+  border-radius: 20px 20px 0 0;
+  padding: 20px 18px calc(20px + env(safe-area-inset-bottom));
+  animation: slideUp 0.2s ease-out;
+}
+
+@media (min-width: 520px) {
+  .modal-card { border-radius: var(--radius); margin: 0 16px; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.modal-header h3 {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 400;
+  color: var(--text-1);
+}
+
+.modal-close {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg-2);
+  color: var(--text-2);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-subtitle {
+  font-size: 13px;
+  color: var(--text-3);
+  margin-bottom: 16px;
+}
+
+.song-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.song-option {
+  text-align: left;
+  padding: 13px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-md);
+  background: var(--bg);
+  color: var(--text-1);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.song-option:hover {
+  background: var(--bg-2);
+  border-color: var(--text-2);
+}
+
+.song-log {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.song-log-heading {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 10px;
+}
+
+.song-log-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.song-log-item:hover { background: var(--bg-2); }
+
+.song-log-remove {
+  border: none;
+  background: none;
+  color: var(--text-3);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px;
+}
+
+.song-log-remove:hover { color: var(--text-1); }
 
 /* ── Bottom bar ── */
 .bottom-bar {

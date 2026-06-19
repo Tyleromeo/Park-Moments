@@ -3,6 +3,22 @@
 // badge options: 'thrill' | 'family' | 'show' | 'food' | 'character'
 // must: true  →  shows a star and sorts to top of section
 
+// Items that support a song/variant picker after being checked.
+// Used for rides with randomized soundtracks like Cosmic Rewind.
+const SONG_PICKERS = {
+  'ep-01': {
+    label: 'Which song did you get?',
+    options: [
+      'September — Earth, Wind & Fire',
+      'Disco Inferno — The Trammps',
+      'Conga — Miami Sound Machine',
+      'Everybody Wants to Rule the World — Tears for Fears',
+      'I Ran — A Flock of Seagulls',
+      'One Way or Another — Blondie',
+    ]
+  }
+};
+
 const PARKS = [
   {
     id: 'mk',

@@ -6,6 +6,8 @@
 const STORAGE_KEY_CHECKS = 'rd_checks_v1';
 const STORAGE_KEY_NOTES  = 'rd_notes_v1';
 const STORAGE_KEY_PARK   = 'rd_active_park_v1';
+const STORAGE_KEY_COUNTS = 'rd_counts_v1';
+const STORAGE_KEY_SONGS  = 'rd_songs_v1';
 
 const Storage = {
   // --- Checks (which items are ticked) ---
@@ -25,10 +27,18 @@ const Storage = {
   },
   clearPark(parkId) {
     const checks = this.getChecked();
+    const counts = this.getCounts();
+    const songs = this.getSongs();
     PARKS.find(p => p.id === parkId)?.sections.forEach(s =>
-      s.items.forEach(i => delete checks[i.id])
+      s.items.forEach(i => {
+        delete checks[i.id];
+        delete counts[i.id];
+        delete songs[i.id];
+      })
     );
     this.setChecked(checks);
+    this.setCounts(counts);
+    localStorage.setItem(STORAGE_KEY_SONGS, JSON.stringify(songs));
   },
 
   // --- Notes ---
@@ -49,6 +59,57 @@ const Storage = {
   },
   setActivePark(id) {
     localStorage.setItem(STORAGE_KEY_PARK, id);
+  },
+
+  // --- Ride counts (how many times you've done a ride) ---
+  getCounts() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY_COUNTS) || '{}');
+    } catch { return {}; }
+  },
+  setCounts(obj) {
+    localStorage.setItem(STORAGE_KEY_COUNTS, JSON.stringify(obj));
+  },
+  getCount(id) {
+    return this.getCounts()[id] || 0;
+  },
+  incrementCount(id) {
+    const counts = this.getCounts();
+    counts[id] = (counts[id] || 0) + 1;
+    this.setCounts(counts);
+    return counts[id];
+  },
+  decrementCount(id) {
+    const counts = this.getCounts();
+    counts[id] = Math.max(0, (counts[id] || 0) - 1);
+    if (counts[id] === 0) delete counts[id];
+    this.setCounts(counts);
+    return counts[id] || 0;
+  },
+
+  // --- Song / variant log (e.g. Cosmic Rewind songs heard) ---
+  getSongs() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY_SONGS) || '{}');
+    } catch { return {}; }
+  },
+  // Returns array of song strings logged for this item
+  getSongLog(id) {
+    return this.getSongs()[id] || [];
+  },
+  addSong(id, song) {
+    const songs = this.getSongs();
+    if (!songs[id]) songs[id] = [];
+    songs[id].push(song);
+    localStorage.setItem(STORAGE_KEY_SONGS, JSON.stringify(songs));
+  },
+  removeSong(id, index) {
+    const songs = this.getSongs();
+    if (songs[id]) {
+      songs[id].splice(index, 1);
+      if (songs[id].length === 0) delete songs[id];
+      localStorage.setItem(STORAGE_KEY_SONGS, JSON.stringify(songs));
+    }
   },
 
   // --- Stats helper ---

@@ -72,22 +72,41 @@ function renderPark() {
     section.items.forEach(item => {
       const isDone = !!checks[item.id];
       const badge = BADGE_CONFIG[item.badge] || BADGE_CONFIG.family;
+      const count = Storage.getCount(item.id);
+      const hasSongPicker = !!SONG_PICKERS[item.id];
+      const songLog = Storage.getSongLog(item.id);
+
       html += `
-        <button
-          class="item${isDone ? ' item-done' : ''}"
-          data-id="${item.id}"
-          aria-pressed="${isDone}"
-          aria-label="${item.name}${isDone ? ' — completed' : ''}"
-        >
-          <span class="item-check" aria-hidden="true">
-            ${isDone ? `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>` : ''}
-          </span>
-          <span class="item-body">
-            <span class="item-name">${item.must ? '<span class="must-star" aria-label="must-do">★</span> ' : ''}${item.name}</span>
-            <span class="item-meta">${item.meta}</span>
-          </span>
-          <span class="badge ${badge.cls}">${badge.label}</span>
-        </button>
+        <div class="item-row${isDone ? ' item-done' : ''}" data-id="${item.id}">
+          <button
+            class="item"
+            data-id="${item.id}"
+            aria-pressed="${isDone}"
+            aria-label="${item.name}${isDone ? ' — completed' : ''}"
+          >
+            <span class="item-check" aria-hidden="true">
+              ${isDone ? `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>` : ''}
+            </span>
+            <span class="item-body">
+              <span class="item-name">${item.must ? '<span class="must-star" aria-label="must-do">★</span> ' : ''}${item.name}</span>
+              <span class="item-meta">${item.meta}${songLog.length ? ` · <span class="song-tag-inline">${songLog[songLog.length - 1]}</span>` : ''}</span>
+            </span>
+            <span class="badge ${badge.cls}">${badge.label}</span>
+          </button>
+          <div class="item-extras">
+            ${isDone ? `
+              <button class="count-btn" data-id="${item.id}" title="Add another ride">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                ${count > 0 ? `<span class="count-num">${count + 1}×</span>` : ''}
+              </button>
+            ` : ''}
+            ${isDone && hasSongPicker ? `
+              <button class="song-btn" data-id="${item.id}" title="Log which song you got">
+                🎵${songLog.length > 1 ? ` <span class="count-num">${songLog.length}</span>` : ''}
+              </button>
+            ` : ''}
+          </div>
+        </div>
       `;
     });
 
@@ -110,9 +129,25 @@ function renderPark() {
 
   main.innerHTML = html;
 
-  // Bind item taps
+  // Bind item taps (the main check toggle)
   main.querySelectorAll('.item').forEach(btn => {
     btn.addEventListener('click', () => toggleItem(btn.dataset.id));
+  });
+
+  // Bind count buttons
+  main.querySelectorAll('.count-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      bumpCount(btn.dataset.id);
+    });
+  });
+
+  // Bind song buttons
+  main.querySelectorAll('.song-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openSongPicker(btn.dataset.id);
+    });
   });
 
   // Bind notes
@@ -149,33 +184,103 @@ function switchPark(id) {
 
 function toggleItem(id) {
   const newState = Storage.toggleItem(id);
-  // Update just this button without full re-render for snappiness
-  const btn = document.querySelector(`.item[data-id="${id}"]`);
-  if (btn) {
-    btn.classList.toggle('item-done', newState);
-    btn.setAttribute('aria-pressed', newState);
-    const check = btn.querySelector('.item-check');
-    check.innerHTML = newState
-      ? `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`
-      : '';
-  }
-  // Update stats
   const park = PARKS.find(p => p.id === activeParkId);
-  const { done, total, pct } = Storage.getParkStats(activeParkId);
-  renderBottomBar(park, done, total, pct);
 
-  // Update progress bar in hero
-  const fill = document.querySelector('.park-progress-fill');
-  const label = document.querySelector('.park-progress-label');
-  if (fill) fill.style.width = `${pct}%`;
-  if (label) label.textContent = `${done} of ${total} done`;
-
-  // Update tab pill
   renderNav();
+  renderPark();
 
-  if (newState && done === total) {
-    showToast(`${park.emoji} All done at ${park.shortName}!`);
+  if (newState) {
+    const { done, total } = Storage.getParkStats(activeParkId);
+    if (done === total) showToast(`${park.emoji} All done at ${park.shortName}!`);
+
+    // If this item has a song picker, prompt right away
+    if (SONG_PICKERS[id]) {
+      openSongPicker(id);
+    }
   }
+}
+
+function bumpCount(id) {
+  Storage.incrementCount(id);
+  renderPark();
+  showToast('Logged another ride 🎢');
+}
+
+function findItemById(id) {
+  for (const park of PARKS) {
+    for (const section of park.sections) {
+      const item = section.items.find(i => i.id === id);
+      if (item) return item;
+    }
+  }
+  return null;
+}
+
+// ── Song picker modal ────────────────────────────────────────────────────────
+function openSongPicker(id) {
+  const config = SONG_PICKERS[id];
+  if (!config) return;
+  const item = findItemById(id);
+  const log = Storage.getSongLog(id);
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>${config.label}</h3>
+        <button class="modal-close" aria-label="Close">✕</button>
+      </div>
+      <p class="modal-subtitle">${item ? item.name : ''}</p>
+      <div class="song-options">
+        ${config.options.map(song => `
+          <button class="song-option" data-song="${song.replace(/"/g, '&quot;')}">${song}</button>
+        `).join('')}
+      </div>
+      ${log.length ? `
+        <div class="song-log">
+          <div class="song-log-heading">Logged rides (${log.length})</div>
+          ${log.map((s, i) => `
+            <div class="song-log-item">
+              <span>${s}</span>
+              <button class="song-log-remove" data-index="${i}" aria-label="Remove">✕</button>
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
+
+  const close = () => {
+    overlay.remove();
+    document.body.style.overflow = '';
+    renderPark(); // refresh song tag/count on the item
+  };
+
+  overlay.querySelector('.modal-close').addEventListener('click', close);
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) close();
+  });
+
+  overlay.querySelectorAll('.song-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      Storage.addSong(id, btn.dataset.song);
+      showToast('Song logged 🎵');
+      close();
+    });
+  });
+
+  overlay.querySelectorAll('.song-log-remove').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      Storage.removeSong(id, parseInt(btn.dataset.index, 10));
+      close();
+      openSongPicker(id); // reopen refreshed
+    });
+  });
 }
 
 function resetPark(park) {
