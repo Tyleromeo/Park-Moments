@@ -8,18 +8,97 @@ const BADGE_CONFIG = {
   character: { label: 'Meet',       cls: 'badge-character' },
 };
 
+// View state: 'resorts' (the resort-picker screen) or 'park' (a park's checklist)
+let currentView = 'resorts';
+let activeResortId = Storage.getActiveResort();
 let activeParkId = Storage.getActivePark();
+
+// If we have a remembered park, jump straight back into it; otherwise
+// land on the resort picker first.
+if (activeResortId && PARKS.some(p => p.id === activeParkId && p.resortId === activeResortId)) {
+  currentView = 'park';
+}
+
+// ── Render resort picker screen ─────────────────────────────────────────────
+function renderResortScreen() {
+  const main = document.getElementById('main-content');
+  const nav = document.getElementById('park-nav');
+  nav.innerHTML = '';
+  nav.style.display = 'none';
+
+  const html = `
+    <div class="resort-screen">
+      <div class="resort-screen-header">
+        <h1 class="resort-screen-title">Where to?</h1>
+        <p class="resort-screen-subtitle">Pick a resort to see its parks</p>
+      </div>
+      <div class="resort-cards">
+        ${RESORTS.map(resort => {
+          const parksHere = PARKS.filter(p => p.resortId === resort.id);
+          const tally = Storage.getResortTally(resort.id);
+          return `
+            <button class="resort-card" data-resort="${resort.id}">
+              <span class="resort-card-emoji">${resort.emoji}</span>
+              <span class="resort-card-name">${resort.name}</span>
+              <span class="resort-card-location">${resort.location}</span>
+              <span class="resort-card-parks">${parksHere.map(p => p.emoji).join(' ')} ${parksHere.length} parks</span>
+              ${tally > 0 ? `<span class="resort-card-tally">${tally} activities logged</span>` : ''}
+            </button>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
+
+  main.innerHTML = html;
+
+  main.querySelectorAll('.resort-card').forEach(btn => {
+    btn.addEventListener('click', () => switchResort(btn.dataset.resort));
+  });
+
+  document.getElementById('progress-summary').innerHTML = '';
+  document.getElementById('reset-btn').style.display = 'none';
+}
+
+function switchResort(resortId) {
+  activeResortId = resortId;
+  Storage.setActiveResort(resortId);
+  // Jump to the first park belonging to this resort
+  const firstPark = PARKS.find(p => p.resortId === resortId);
+  if (firstPark) {
+    activeParkId = firstPark.id;
+    Storage.setActivePark(firstPark.id);
+  }
+  currentView = 'park';
+  document.getElementById('reset-btn').style.display = '';
+  renderNav();
+  renderPark();
+  window.scrollTo(0, 0);
+}
+
+function backToResorts() {
+  currentView = 'resorts';
+  renderResortScreen();
+  window.scrollTo(0, 0);
+}
 
 // ── Render park nav ──────────────────────────────────────────────────────────
 function renderNav() {
   const nav = document.getElementById('park-nav');
-  const checks = Storage.getChecked();
+  nav.style.display = '';
 
-  nav.innerHTML = PARKS.map(park => {
-    const { done, total } = Storage.getParkStats(park.id);
+  const parksHere = PARKS.filter(p => p.resortId === activeResortId);
+
+  const backBtn = `
+    <button class="park-tab back-tab" data-action="back-to-resorts">
+      <span class="tab-emoji">←</span>
+      <span class="tab-name">Resorts</span>
+    </button>
+  `;
+
+  const parkTabs = parksHere.map(park => {
     const { total: tallyTotal } = Storage.getActivityTally(park.id);
     const isActive = park.id === activeParkId;
-    const pct = total ? Math.round((done / total) * 100) : 0;
 
     return `
       <button
@@ -37,7 +116,10 @@ function renderNav() {
     `;
   }).join('');
 
-  nav.querySelectorAll('.park-tab').forEach(btn => {
+  nav.innerHTML = backBtn + parkTabs;
+
+  nav.querySelector('[data-action="back-to-resorts"]').addEventListener('click', backToResorts);
+  nav.querySelectorAll('.park-tab[data-park]').forEach(btn => {
     btn.addEventListener('click', () => switchPark(btn.dataset.park));
   });
 }
@@ -270,6 +352,7 @@ function renderBottomBar(park, done, total, pct) {
   `;
 
   const resetBtn = document.getElementById('reset-btn');
+  resetBtn.style.display = '';
   resetBtn.onclick = () => resetPark(park);
 }
 
@@ -402,6 +485,110 @@ function resetPark(park) {
   showToast('Checklist cleared');
 }
 
+// ── Trips modal ──────────────────────────────────────────────────────────────
+function bindTripButton() {
+  const btn = document.getElementById('trip-btn');
+  if (btn) btn.addEventListener('click', openTripsModal);
+}
+
+function openTripsModal() {
+  const trips = Storage.listTrips();
+  const activeId = Storage.getActiveTripId();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Your trips</h3>
+        <button class="modal-close" aria-label="Close">✕</button>
+      </div>
+      <p class="modal-subtitle">Each trip keeps its own checklist, stars, and stats — perfect for comparing this year's visit to last year's.</p>
+      <div class="trip-list">
+        ${trips.map(trip => `
+          <div class="trip-item${trip.id === activeId ? ' trip-item-active' : ''}" data-id="${trip.id}">
+            <button class="trip-select" data-id="${trip.id}">
+              <span class="trip-name">${trip.name}</span>
+              <span class="trip-date">${new Date(trip.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+            </button>
+            <button class="trip-rename" data-id="${trip.id}" aria-label="Rename trip" title="Rename">✎</button>
+            ${trips.length > 1 ? `<button class="trip-delete" data-id="${trip.id}" aria-label="Delete trip" title="Delete">🗑</button>` : ''}
+          </div>
+        `).join('')}
+      </div>
+      <button class="new-trip-btn">+ Start a new trip</button>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
+
+  const close = (shouldRerender) => {
+    overlay.remove();
+    document.body.style.overflow = '';
+    if (shouldRerender) {
+      activeResortId = Storage.getActiveResort();
+      activeParkId = Storage.getActivePark();
+      if (activeResortId) {
+        currentView = 'park';
+        renderNav();
+        renderPark();
+      } else {
+        currentView = 'resorts';
+        renderResortScreen();
+      }
+    }
+  };
+
+  overlay.querySelector('.modal-close').addEventListener('click', () => close(false));
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) close(false);
+  });
+
+  overlay.querySelectorAll('.trip-select').forEach(btn => {
+    btn.addEventListener('click', () => {
+      Storage.setActiveTrip(btn.dataset.id);
+      showToast('Switched trips 🧳');
+      close(true);
+    });
+  });
+
+  overlay.querySelectorAll('.trip-rename').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const trips = Storage.listTrips();
+      const trip = trips.find(t => t.id === btn.dataset.id);
+      const newName = prompt('Rename this trip', trip ? trip.name : '');
+      if (newName && newName.trim()) {
+        Storage.renameTrip(btn.dataset.id, newName.trim());
+        close(false);
+        openTripsModal();
+      }
+    });
+  });
+
+  overlay.querySelectorAll('.trip-delete').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const trips = Storage.listTrips();
+      const trip = trips.find(t => t.id === btn.dataset.id);
+      if (!confirm(`Delete "${trip ? trip.name : 'this trip'}"? This removes all its checklist data permanently.`)) return;
+      Storage.deleteTrip(btn.dataset.id);
+      close(true);
+    });
+  });
+
+  overlay.querySelector('.new-trip-btn').addEventListener('click', () => {
+    const name = prompt('Name this trip (e.g. "Family Vacation 2026")', '');
+    if (name === null) return; // cancelled
+    const tripId = Storage.createTrip(name.trim() || 'New Trip');
+    Storage._seedStarsForTrip(tripId);
+    localStorage.removeItem(STORAGE_KEY_RESORT); // new trip starts at resort picker
+    showToast('New trip started 🎉');
+    close(true);
+  });
+}
+
 // ── Toast ────────────────────────────────────────────────────────────────────
 let toastTimer;
 function showToast(msg, opts = {}) {
@@ -415,9 +602,19 @@ function showToast(msg, opts = {}) {
 
 // ── Init ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  renderNav();
-  renderPark();
+  // Make sure a valid trip exists before anything else renders
+  Storage.ensureActiveTrip();
+
+  if (currentView === 'park' && activeResortId) {
+    renderNav();
+    renderPark();
+  } else {
+    currentView = 'resorts';
+    renderResortScreen();
+  }
+
   maybeShowStarHint();
+  bindTripButton();
 });
 
 function maybeShowStarHint() {

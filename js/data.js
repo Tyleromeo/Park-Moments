@@ -19,9 +19,15 @@ const SONG_PICKERS = {
   }
 };
 
+const RESORTS = [
+  { id: 'wdw', name: 'Walt Disney World', shortName: 'Disney World', location: 'Orlando, FL', emoji: '🏰' },
+  { id: 'dlr', name: 'Disneyland Resort', shortName: 'Disneyland', location: 'Anaheim, CA', emoji: '⭐' },
+];
+
 const PARKS = [
   {
     id: 'mk',
+    resortId: 'wdw',
     name: 'Magic Kingdom',
     shortName: 'Magic Kingdom',
     resort: 'Walt Disney World · Orlando',
@@ -90,6 +96,7 @@ const PARKS = [
 
   {
     id: 'hs',
+    resortId: 'wdw',
     name: 'Hollywood Studios',
     shortName: 'Hollywood Studios',
     resort: 'Walt Disney World · Orlando',
@@ -141,6 +148,7 @@ const PARKS = [
 
   {
     id: 'ep',
+    resortId: 'wdw',
     name: 'EPCOT',
     shortName: 'EPCOT',
     resort: 'Walt Disney World · Orlando',
@@ -193,6 +201,7 @@ const PARKS = [
 
   {
     id: 'ak',
+    resortId: 'wdw',
     name: 'Animal Kingdom',
     shortName: 'Animal Kingdom',
     resort: 'Walt Disney World · Orlando',
@@ -241,6 +250,7 @@ const PARKS = [
 
   {
     id: 'dl',
+    resortId: 'dlr',
     name: 'Disneyland',
     shortName: 'Disneyland',
     resort: 'Disneyland Resort · Anaheim',
@@ -288,6 +298,64 @@ const PARKS = [
           { id: 'dl-20', name: 'Corn dog at Little Red Wagon', meta: 'Main Street USA · Disneyland institution', badge: 'food' },
           { id: 'dl-21', name: 'Churro from a cart', meta: 'Available throughout the park', badge: 'food' },
           { id: 'dl-22', name: 'Ronto Wrap at Ronto Roasters', meta: "Galaxy's Edge", badge: 'food' },
+        ]
+      }
+    ]
+  },
+
+  {
+    id: 'dca',
+    resortId: 'dlr',
+    name: 'Disney California Adventure',
+    shortName: 'California Adventure',
+    resort: 'Disneyland Resort · Anaheim',
+    emoji: '🎡',
+    accentColor: '#d4651a',
+    accentLight: '#fbeee2',
+    sections: [
+      {
+        name: 'Must-dos',
+        items: [
+          { id: 'dca-01', name: 'Radiator Springs Racers', meta: 'Cars Land · 40" min height', badge: 'thrill', must: true },
+          { id: 'dca-02', name: 'Guardians of the Galaxy – Mission: BREAKOUT!', meta: 'Avengers Campus · 40" min height', badge: 'thrill', must: true },
+          { id: 'dca-03', name: 'Web Slingers: A Spider-Man Adventure', meta: 'Avengers Campus · all ages', badge: 'family', must: true },
+          { id: 'dca-04', name: 'Incredicoaster', meta: 'Pixar Pier · 48" min height', badge: 'thrill', must: true },
+          { id: 'dca-05', name: 'World of Color', meta: 'Paradise Bay · evenings', badge: 'show', must: true },
+        ]
+      },
+      {
+        name: 'More rides',
+        items: [
+          { id: 'dca-06', name: 'Soarin\' Around the World', meta: 'Grizzly Peak · 40" min height', badge: 'family' },
+          { id: 'dca-07', name: 'Grizzly River Run', meta: 'Grizzly Peak · 42" min height · you will get wet', badge: 'thrill' },
+          { id: 'dca-08', name: 'Goofy\'s Sky School', meta: 'Paradise Gardens Park · 42" min height', badge: 'thrill' },
+          { id: 'dca-09', name: 'Pixar Pal-A-Round (swinging gondola)', meta: 'Pixar Pier · 40" min height', badge: 'family' },
+          { id: 'dca-10', name: 'Toy Story Midway Mania!', meta: 'Pixar Pier · all ages', badge: 'family' },
+          { id: 'dca-11', name: 'Monsters, Inc. Mike & Sulley to the Rescue!', meta: 'Hollywood Land · all ages', badge: 'family' },
+        ]
+      },
+      {
+        name: 'Avengers Campus',
+        items: [
+          { id: 'dca-12', name: 'Avengers Headquarters meet-and-greets', meta: 'Spider-Man, Black Panther & more', badge: 'character' },
+          { id: 'dca-13', name: 'WEB Suppliers shopping', meta: 'Avengers Campus · merch & props', badge: 'family' },
+        ]
+      },
+      {
+        name: 'Shows & entertainment',
+        items: [
+          { id: 'dca-14', name: 'Pixar Fest cavalcades', meta: 'Seasonal — check schedule', badge: 'show' },
+          { id: 'dca-15', name: 'Frozen – Live at the Hyperion', meta: 'Hollywood Land · seasonal, check schedule', badge: 'show' },
+        ]
+      },
+      {
+        name: 'Food & drink',
+        items: [
+          { id: 'dca-16', name: 'Cherry Cola Float at Carthay Circle', meta: 'Buena Vista Street', badge: 'food', must: true },
+          { id: 'dca-17', name: 'Churro Toffee Sundae', meta: 'Available seasonally', badge: 'food' },
+          { id: 'dca-18', name: 'Ghirardelli ice cream', meta: 'Buena Vista Street', badge: 'food' },
+          { id: 'dca-19', name: 'Award Wieners hot dogs', meta: 'Hollywood Land', badge: 'food' },
+          { id: 'dca-20', name: 'Lamplight Lounge', meta: 'Pixar Pier · waterfront dining, reservations suggested', badge: 'food' },
         ]
       }
     ]

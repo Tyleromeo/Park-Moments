@@ -488,6 +488,185 @@ body {
 
 .bottom-spacer { height: 24px; }
 
+/* ── Resort picker screen ── */
+.resort-screen {
+  padding: 32px 18px 24px;
+}
+
+.resort-screen-header {
+  margin-bottom: 24px;
+}
+
+.resort-screen-title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 400;
+  color: var(--text-1);
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+
+.resort-screen-subtitle {
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+.resort-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.resort-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 22px 20px;
+  border-radius: 16px;
+  border: 1px solid var(--border-md);
+  background: var(--bg);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.resort-card:hover {
+  border-color: var(--text-2);
+}
+
+.resort-card:active {
+  transform: scale(0.985);
+}
+
+.resort-card-emoji {
+  font-size: 30px;
+  margin-bottom: 4px;
+}
+
+.resort-card-name {
+  font-family: var(--font-display);
+  font-size: 21px;
+  color: var(--text-1);
+}
+
+.resort-card-location {
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.resort-card-parks {
+  font-size: 13px;
+  color: var(--text-2);
+  margin-top: 6px;
+}
+
+.resort-card-tally {
+  font-size: 12px;
+  font-weight: 600;
+  color: #b8761f;
+  margin-top: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .resort-card-tally { color: #e0a04a; }
+}
+
+/* ── Back-to-resorts tab ── */
+.back-tab {
+  border-right: 1px solid var(--border);
+  margin-right: 4px;
+  padding-right: 14px;
+  color: var(--text-3);
+}
+
+/* ── Trips modal ── */
+.trip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.trip-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.trip-item-active {
+  border-color: var(--text-1);
+  background: var(--bg-2);
+}
+
+.trip-select {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 12px 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+  min-width: 0;
+}
+
+.trip-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-1);
+}
+
+.trip-date {
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.trip-rename,
+.trip-delete {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: var(--radius-sm);
+}
+
+.trip-rename:hover,
+.trip-delete:hover {
+  background: var(--bg-3);
+  color: var(--text-1);
+}
+
+.new-trip-btn {
+  width: 100%;
+  padding: 13px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border-md);
+  background: transparent;
+  color: var(--text-2);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.new-trip-btn:hover {
+  background: var(--bg-2);
+  border-color: var(--text-2);
+  color: var(--text-1);
+}
+
 /* ── Item row (wraps item + extras) ── */
 .item-row {
   display: flex;
