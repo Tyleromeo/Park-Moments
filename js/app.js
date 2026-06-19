@@ -583,7 +583,8 @@ function openTripsModal() {
     if (name === null) return; // cancelled
     const tripId = Storage.createTrip(name.trim() || 'New Trip');
     Storage._seedStarsForTrip(tripId);
-    localStorage.removeItem(STORAGE_KEY_RESORT); // new trip starts at resort picker
+    // New trips start with no resort selected, so the person lands on the
+    // resort picker first — this is the default in emptyTripData().
     showToast('New trip started 🎉');
     close(true);
   });

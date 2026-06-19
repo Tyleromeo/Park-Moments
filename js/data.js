@@ -262,7 +262,7 @@ const PARKS = [
         name: 'Must-dos',
         items: [
           { id: 'dl-01', name: 'Indiana Jones Adventure', meta: 'Adventureland · 46" min height', badge: 'thrill', must: true },
-          { id: 'dl-02', name: 'Radiator Springs Racers', meta: "Cars Land (DCA) · 40\" min height", badge: 'thrill', must: true },
+          { id: 'dl-02', name: "It's a Small World (the original)", meta: 'Fantasyland · all ages — the one that started it all', badge: 'family', must: true },
           { id: 'dl-03', name: 'Star Wars: Rise of the Resistance', meta: "Galaxy's Edge · 40\" min height", badge: 'thrill', must: true },
           { id: 'dl-04', name: 'Haunted Mansion', meta: 'New Orleans Square · all ages', badge: 'family', must: true },
           { id: 'dl-05', name: 'Pirates of the Caribbean', meta: 'New Orleans Square · all ages — the original!', badge: 'family', must: true },
@@ -272,10 +272,10 @@ const PARKS = [
       {
         name: 'Classic Disneyland',
         items: [
-          { id: 'dl-07', name: "It's a Small World (the original)", meta: 'Fantasyland · all ages', badge: 'family' },
+          { id: 'dl-07', name: 'Splash Mountain → Tiana\'s Bayou Adventure', meta: 'Critter Country · 40" min height · you will get wet', badge: 'family' },
           { id: 'dl-08', name: 'Space Mountain', meta: 'Tomorrowland · 40" min height', badge: 'thrill' },
           { id: 'dl-09', name: 'Big Thunder Mountain Railroad', meta: 'Frontierland · 40" min height', badge: 'thrill' },
-          { id: 'dl-10', name: "Tiana's Bayou Adventure", meta: 'Critter Country · 40" min height · you will get wet', badge: 'family' },
+          { id: 'dl-10', name: 'Peter Pan\'s Flight', meta: 'Fantasyland · all ages', badge: 'family' },
           { id: 'dl-11', name: 'Jungle Cruise', meta: 'Adventureland · all ages', badge: 'family' },
           { id: 'dl-12', name: 'Millennium Falcon: Smugglers Run', meta: "Galaxy's Edge · 38\" min height", badge: 'thrill' },
         ]

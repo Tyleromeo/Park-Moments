@@ -15,14 +15,13 @@
 const STORAGE_KEY_TRIPS_DATA = 'rd_trips_data_v1';
 const STORAGE_KEY_TRIPS_META = 'rd_trips_meta_v1';
 const STORAGE_KEY_ACTIVE_TRIP = 'rd_active_trip_v1';
-const STORAGE_KEY_RESORT = 'rd_active_resort_v1';
 
 function uid() {
   return 'trip_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
 function emptyTripData() {
-  return { checks: {}, counts: {}, songs: {}, stars: {}, notes: {}, activePark: PARKS[0].id };
+  return { checks: {}, counts: {}, songs: {}, stars: {}, notes: {}, activePark: PARKS[0].id, activeResort: null };
 }
 
 const Storage = {
@@ -192,12 +191,14 @@ const Storage = {
     this._saveTripData(data);
   },
 
-  // ── Last active resort (global, not per-trip — just a UI convenience) ─
+  // ── Last active resort (per trip) ──────────────────────────────────
   getActiveResort() {
-    return localStorage.getItem(STORAGE_KEY_RESORT) || null;
+    return this._getTripData().activeResort || null;
   },
   setActiveResort(id) {
-    localStorage.setItem(STORAGE_KEY_RESORT, id);
+    const data = this._getTripData();
+    data.activeResort = id || null;
+    this._saveTripData(data);
   },
 
   // ── Ride counts (how many times you've done a ride) ────────────────
