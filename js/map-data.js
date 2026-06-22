@@ -73,12 +73,12 @@ const MAP_MARKERS = {
     { itemId: 'ak-02', lat: 28.363108, lng: -81.593531 }, // Kilimanjaro Safaris
     { itemId: 'ak-03', lat: 28.358192, lng: -81.587144 }, // Expedition Everest
     { itemId: 'ak-05', lat: 28.359397, lng: -81.588317 }, // Kali River Rapids
-    { itemId: 'ak-06', lat: 28.355528, lng: -81.588469 }, // DINOSAUR
     { itemId: 'ak-13', lat: 28.357311, lng: -81.589589 }, // Flame Tree Barbecue
-    { itemId: 'ak-07', lat: 28.356389, lng: -81.588058 }, // TriceraTop Spin
-    { itemId: 'ak-09', lat: 28.357417, lng: -81.587558 }, // Finding Nemo show
+    { itemId: 'ak-17', lat: 28.357733, lng: -81.590458 }, // Zootopia: Better Zoogether! (Tree of Life Theater)
     { itemId: 'ak-11', lat: 28.359572, lng: -81.588622 }, // Maharajah Jungle Trek
     { itemId: 'ak-16', lat: 28.358794, lng: -81.592122 }, // Tusker House
+    { itemId: 'ak-04', lat: 28.359800, lng: -81.594800 }, // Na'vi River Journey
+    { itemId: 'ak-08', lat: 28.362500, lng: -81.591400 }, // Festival of the Lion King
   ],
   // Disneyland & DCA: approximate placements (no crowd-sourced per-ride
   // GPS list was available), positioned within their known general lands.

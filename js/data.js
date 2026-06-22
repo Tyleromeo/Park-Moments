@@ -921,6 +921,136 @@ const MENU_DATA = {
       { name: 'Sundaes' },
     ]
   },
+  'ak-13': {
+    tier: '$$',
+    items: [
+      { name: 'Half Slow-Smoked Chicken' },
+      { name: 'Pulled Pork Sandwich' },
+      { name: 'St. Louis Ribs' },
+      { name: 'BBQ Combo Platter' },
+      { name: 'Cornbread' },
+      { name: 'Coleslaw' },
+      { name: 'Mac & Cheese' },
+      { name: 'Key Lime Pie' },
+    ]
+  },
+  'ak-14': {
+    tier: '$$',
+    items: [
+      { name: 'Chicken & Rice Bowl' },
+      { name: 'Beef & Rice Bowl' },
+      { name: 'Cheeseburger Pod' },
+      { name: 'Vegetable & Tofu Bowl' },
+      { name: 'Blueberry Cream Cheese Pod' },
+      { name: 'Pandoran Sustainable Bowls' },
+    ]
+  },
+  'ak-15': {
+    tier: '$',
+    items: [
+      { name: 'Night Blossom (passionfruit & lemonade slush)' },
+      { name: 'Hyper-Fizzy Porglyt Punch' },
+      { name: 'Hibiscus Tea' },
+    ]
+  },
+  'ak-16': {
+    tier: '$$$',
+    items: [
+      { name: 'Signature Bread Service (Thai Red Curry Milk Bread & Pão de Queijo)' },
+      { name: 'Tamarind-Braised Short Rib' },
+      { name: 'North African-Spiced Tofu' },
+      { name: 'Shrimp & Grits' },
+      { name: 'Charred Lamb Chop' },
+      { name: 'Plant-Based Tasting Menu' },
+      { name: 'Coconut Tapioca Pudding' },
+      { name: 'Wine Flights from Africa, Asia & South America' },
+    ]
+  },
+  'ak-25': {
+    tier: '$$$',
+    items: [
+      { name: 'Firecracker Shrimp' },
+      { name: 'Chicken Tikka Masala' },
+      { name: 'Ahi Tuna Nachos' },
+      { name: 'Lo Mein' },
+      { name: 'Korean Fried Chicken' },
+      { name: 'Garlic Naan' },
+      { name: 'Mango Pie' },
+      { name: 'Yak Attack (frozen cocktail)' },
+    ]
+  },
+  'ak-26': {
+    tier: '$$',
+    items: [
+      { name: 'Pan-Asian Noodle Bowl' },
+      { name: 'Pork Egg Rolls' },
+      { name: 'Sweet & Sour Chicken' },
+      { name: 'Honey Chicken' },
+      { name: 'Vegetable Fried Rice' },
+      { name: 'Mickey Pretzel' },
+    ]
+  },
+  'ak-27': {
+    tier: '$$$',
+    items: [
+      { name: 'Character Dining Buffet (breakfast, lunch, dinner)' },
+      { name: 'Mickey & Simba Waffles (breakfast)' },
+      { name: 'Spit-Roasted Tandoori Chicken' },
+      { name: 'Berbere-Marinated Pork' },
+      { name: 'Green Curry Shrimp' },
+      { name: 'Doro Wat' },
+      { name: 'Braised Beef Tajine' },
+      { name: 'Peri-Peri Marinated Salmon' },
+    ]
+  },
+  'ak-28': {
+    tier: '$$',
+    items: [
+      { name: 'Harissa Chicken Wrap' },
+      { name: 'Sausage & Peppers Pita' },
+      { name: 'Chicken Skewers' },
+      { name: 'Falafel Wrap' },
+      { name: 'African-Spiced Corn on the Cob' },
+      { name: 'Berry Fruit Plate' },
+    ]
+  },
+  'ak-29': {
+    tier: '$',
+    items: [
+      { name: 'Night Blossom (passionfruit & lemonade slush)' },
+      { name: 'Specialty Frozen Cocktails' },
+    ]
+  },
+  'ak-30': {
+    tier: '$$',
+    items: [
+      { name: 'Tuna Poke Bowl' },
+      { name: 'Cuban Frita Sliders' },
+      { name: 'Tiffins Bread Service' },
+      { name: 'Chicken Manchurian Nomad Bowl' },
+      { name: 'Churros' },
+      { name: 'Guava Margarita' },
+      { name: 'The Night Monkey (cocktail)' },
+      { name: 'Annapurna Zing (gin & passionfruit cocktail)' },
+    ]
+  },
+  'ak-31': {
+    tier: '$',
+    items: [
+      { name: 'Colossal Cinnamon Bun' },
+      { name: 'Breakfast Sandwich' },
+      { name: 'Pastries' },
+      { name: 'Specialty Coffee' },
+    ]
+  },
+  'ak-32': {
+    tier: '$',
+    items: [
+      { name: 'Specialty Frozen Cocktails' },
+      { name: 'Non-Alcoholic Frozen Drinks' },
+      { name: 'Draft Beer' },
+    ]
+  },
 };
 
 const TYPICAL_SHOWTIMES = {
@@ -934,8 +1064,9 @@ const TYPICAL_SHOWTIMES = {
   'hs-12': ['Continuous throughout the day — just walk up'],
   'ep-15': ['9:00 PM (seasonal, check app for current schedule)'],
   'ak-08': ['11:00 AM', '1:00 PM', '3:00 PM', '5:00 PM'],
-  'ak-09': ['Continuous throughout the day — just walk up'],
-  'ak-12': ['After dark — short looping projections until close'],
+  'ak-17': ['Continuous throughout the day — just walk up'],
+  'ak-12': ['After dark — short looping projections until close, seasonal Nov–March'],
+  'ak-21': ['10:30 AM', '12:30 PM', '2:30 PM', '4:30 PM'],
   'dl-13': ['Varies — typically nightly, check app'],
   'dl-14': ['Varies — typically nightly at DCA, check app'],
   'dl-15': ['Seasonal — check app for current run dates and time'],
@@ -1196,16 +1327,16 @@ const PARKS = [
       {
         name: 'World Showcase pavilions',
         items: [
-          { id: 'ep-10', name: 'Mexico pavilion', meta: 'Pyramid, Gran Fiesta Tour & Mexico Folk Art Gallery', badge: 'family' },
-          { id: 'ep-36', name: 'Norway pavilion', meta: 'Frozen Ever After, Stave Church Gallery & Viking artifacts', badge: 'family' },
-          { id: 'ep-37', name: 'China pavilion', meta: 'Reflections of China film & House of Good Fortune shop', badge: 'family' },
-          { id: 'ep-38', name: 'Germany pavilion', meta: 'Biergarten, model train display & toy shops', badge: 'family' },
-          { id: 'ep-39', name: 'Italy pavilion', meta: 'Tutto Italia, Tutto Gusto Wine Cellar & street performers', badge: 'family' },
-          { id: 'ep-11', name: 'Japan pavilion', meta: 'Mitsukoshi department store, koi ponds & sake bar', badge: 'family' },
-          { id: 'ep-40', name: 'Morocco pavilion', meta: 'Intricate tilework, Spice Road Table & Jasmine meet', badge: 'family' },
-          { id: 'ep-12', name: 'France pavilion', meta: 'Remy\'s Ratatouille Adventure, Les Halles & Eiffel Tower view', badge: 'family' },
-          { id: 'ep-13', name: 'United Kingdom pavilion', meta: 'Rose & Crown Pub, gardens & Mary Poppins meet', badge: 'family' },
-          { id: 'ep-14', name: 'Canada pavilion', meta: 'Le Cellier steakhouse & Canada Far and Wide film', badge: 'family' },
+          { id: 'ep-10', name: 'Mexico pavilion', meta: 'Pyramid, Gran Fiesta Tour & Mexico Folk Art Gallery', badge: 'food' },
+          { id: 'ep-36', name: 'Norway pavilion', meta: 'Frozen Ever After, Stave Church Gallery & Viking artifacts', badge: 'food' },
+          { id: 'ep-37', name: 'China pavilion', meta: 'Reflections of China film & House of Good Fortune shop', badge: 'food' },
+          { id: 'ep-38', name: 'Germany pavilion', meta: 'Biergarten, model train display & toy shops', badge: 'food' },
+          { id: 'ep-39', name: 'Italy pavilion', meta: 'Tutto Italia, Tutto Gusto Wine Cellar & street performers', badge: 'food' },
+          { id: 'ep-11', name: 'Japan pavilion', meta: 'Mitsukoshi department store, koi ponds & sake bar', badge: 'food' },
+          { id: 'ep-40', name: 'Morocco pavilion', meta: 'Intricate tilework, Spice Road Table & Jasmine meet', badge: 'food' },
+          { id: 'ep-12', name: 'France pavilion', meta: 'Remy\'s Ratatouille Adventure, Les Halles & Eiffel Tower view', badge: 'food' },
+          { id: 'ep-13', name: 'United Kingdom pavilion', meta: 'Rose & Crown Pub, gardens & Mary Poppins meet', badge: 'food' },
+          { id: 'ep-14', name: 'Canada pavilion', meta: 'Le Cellier steakhouse & Canada Far and Wide film', badge: 'food' },
         ]
       },
       {
@@ -1275,18 +1406,23 @@ const PARKS = [
         items: [
           { id: 'ak-04', name: "Na'vi River Journey", meta: 'Pandora · all ages', badge: 'family' },
           { id: 'ak-05', name: 'Kali River Rapids', meta: 'Asia · 38" min height · you will get soaked', badge: 'thrill' },
-          { id: 'ak-06', name: 'DINOSAUR', meta: 'DinoLand U.S.A. · 40" min height', badge: 'thrill' },
-          { id: 'ak-07', name: 'TriceraTop Spin', meta: 'DinoLand U.S.A. · all ages', badge: 'family' },
         ]
       },
       {
         name: 'Shows & trails',
         items: [
-          { id: 'ak-08', name: 'Festival of the Lion King', meta: 'Africa · live show, all ages', badge: 'show' },
-          { id: 'ak-09', name: 'Finding Nemo: The Big Blue… and Beyond!', meta: 'DinoLand · live show', badge: 'show' },
+          { id: 'ak-08', name: 'Festival of the Lion King', meta: 'Africa · 30-minute live musical & acrobatic show', badge: 'show' },
+          { id: 'ak-17', name: 'Zootopia: Better Zoogether!', meta: 'Discovery Island (Tree of Life Theater) · 4D film, opened Nov 2025', badge: 'show', status: 'new' },
           { id: 'ak-10', name: 'Gorilla Falls Exploration Trail', meta: 'Africa · walk-through, all ages', badge: 'family' },
           { id: 'ak-11', name: 'Maharajah Jungle Trek', meta: 'Asia · tigers, bats & birds', badge: 'family' },
-          { id: 'ak-12', name: 'Tree of Life Awakenings', meta: 'Discovery Island · evening projections', badge: 'show' },
+          { id: 'ak-12', name: 'Tree of Life Awakenings', meta: 'Discovery Island · evening projections, seasonal (mid-Nov to early March)', badge: 'show' },
+          { id: 'ak-18', name: "Wilderness Explorers", meta: 'Park-wide · self-guided badge-earning activity, all ages', badge: 'family' },
+          { id: 'ak-19', name: "Bluey's Wild World", meta: 'Conservation Station · opened May 26, 2026 — virtual queue required', badge: 'family', status: 'new' },
+          { id: 'ak-20', name: 'Wildlife Express Train', meta: 'Africa (Harambe Station) · only way to reach Conservation Station', badge: 'family' },
+          { id: 'ak-21', name: 'Feathered Friends in Flight!', meta: 'Asia (Caravan Stage) · live bird show', badge: 'show' },
+          { id: 'ak-22', name: 'Adventurers Outpost', meta: 'Discovery Island · meet Mickey & Minnie', badge: 'character' },
+          { id: 'ak-23', name: 'Habitat Habit!', meta: 'Asia · self-guided cotton-top tamarin exhibit', badge: 'family' },
+          { id: 'ak-24', name: 'Oasis Exhibits', meta: 'Park entrance · giant anteaters, swamp wallabies & more', badge: 'family' },
         ]
       },
       {
@@ -1296,6 +1432,14 @@ const PARKS = [
           { id: 'ak-14', name: "Satu'li Canteen", meta: 'Pandora · healthy bowls & great theming', badge: 'food' },
           { id: 'ak-15', name: 'Night Blossom at Pongu Pongu', meta: 'Pandora · passionfruit & lemonade slush', badge: 'food' },
           { id: 'ak-16', name: 'Tiffins Restaurant', meta: 'Discovery Island · signature dining, reservations required', badge: 'food' },
+          { id: 'ak-25', name: 'Yak & Yeti Restaurant', meta: 'Asia · table-service Pan-Asian cuisine', badge: 'food' },
+          { id: 'ak-26', name: 'Yak & Yeti Local Food Cafes', meta: 'Asia · quick-service counterpart to the restaurant', badge: 'food' },
+          { id: 'ak-27', name: 'Tusker House Restaurant', meta: 'Africa · character dining buffet with Donald & friends', badge: 'food' },
+          { id: 'ak-28', name: 'Harambe Market', meta: 'Africa · African-inspired quick-service stalls', badge: 'food' },
+          { id: 'ak-29', name: "Pongu Pongu", meta: 'Pandora · specialty drinks & frozen cocktails', badge: 'food' },
+          { id: 'ak-30', name: 'Nomad Lounge', meta: 'Discovery Island · craft cocktails & small plates, scenic seating', badge: 'food' },
+          { id: 'ak-31', name: "Kusafiri Coffee Shop & Bakery", meta: 'Africa · pastries & coffee', badge: 'food' },
+          { id: 'ak-32', name: 'Drinkwallah', meta: 'Asia · specialty non-alcoholic & alcoholic frozen drinks', badge: 'food' },
         ]
       }
     ]

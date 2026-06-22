@@ -475,4 +475,90 @@ const RIDE_DETAILS = {
     tip: 'A fun, lower-cost alternative to the lightsaber workshop if you want a Galaxy\'s Edge souvenir without the bigger price tag.',
     funFact: 'The droid parts move along a real conveyor belt system inspired by actual droid depot designs seen throughout the Star Wars films.'
   },
+  // ── Animal Kingdom ──
+  'ak-01': {
+    description: 'A 3D flight simulator that puts you on the back of a banshee soaring over the floating mountains and bioluminescent jungles of Pandora.',
+    tip: 'Consistently ranked among the very best rides at Walt Disney World. Lightning Lane Single Pass is the single most valuable purchase you can make at this park — it disappears fast.',
+    funFact: 'Each ride vehicle is custom-fitted to your body before boarding, including foot straps and a backrest, so the banshee\'s movements feel physically connected to your own.'
+  },
+  'ak-02': {
+    description: 'A guided truck safari through a sprawling, real savanna habitat where giraffes, lions, elephants, and dozens of other African species roam freely.',
+    tip: 'Ride it as early as possible — animals are most active in the cooler morning hours and tend to be far less visible by midday heat.',
+    funFact: 'The 110-acre savanna is a genuine, living habitat, not a themed set — what you see each ride is real, unscripted animal behavior.'
+  },
+  'ak-03': {
+    description: 'A backward-facing roller coaster that winds up, through, and around a recreation of Mount Everest, with a close encounter with the Yeti along the way.',
+    tip: 'A single-rider line is available and can meaningfully cut your wait if you don\'t mind riding without your group.',
+    funFact: 'The Yeti animatronic inside the mountain is one of the largest and most complex Audio-Animatronics figures Disney has ever built.'
+  },
+  'ak-04': {
+    description: 'A slow, atmospheric boat ride through a glowing bioluminescent rainforest in search of the Na\'vi Shaman of Songs.',
+    tip: 'Less thrilling but visually stunning — ride it right after Flight of Passage in the morning while the Pandora area still has shorter lines.',
+    funFact: 'The Shaman of Songs figure is one of the largest Audio-Animatronics ever built by Disney, with a face capable of remarkably subtle expressions.'
+  },
+  'ak-05': {
+    description: 'A river raft ride through the Chakranadi River, with a steep splash-down finale that genuinely soaks riders.',
+    tip: 'A great choice on a hot Florida afternoon — just know you will get wet, especially in the front of the raft.',
+    funFact: 'Pieces of the destroyed logging set throughout the ride were intentionally weathered and aged to tell the story of illegal deforestation before guests ever read a placard about it.'
+  },
+  'ak-08': {
+    description: 'A 30-minute musical and acrobatic stage show retelling The Lion King through massive parade-style floats, aerialists, and stilt performers.',
+    tip: 'One of the most beloved shows at Walt Disney World — arrive 20-30 minutes early, since the theater fills up fast and good seats go quickly.',
+    funFact: 'The show combines elements of Broadway-style staging with circus-level acrobatics, including aerial silk performers suspended high above the audience.'
+  },
+  'ak-17': {
+    description: 'A 4D film experience starring Judy Hopps and Nick Wilde from Zootopia, combining a wraparound screen with in-theater physical effects.',
+    tip: 'Opened in November 2025 inside the same theater that long housed It\'s Tough to Be a Bug! — air-conditioned with generally short waits.',
+    funFact: 'The theater itself, inside the base of the Tree of Life, has hosted several different shows since the park opened in 1998, each one themed to whatever wildlife story Disney wanted to tell at the time.'
+  },
+  'ak-10': {
+    description: 'A self-guided walking trail through lush habitats with western lowland gorillas, hippos, naked mole rats, meerkats, and okapis.',
+    tip: 'One of the most underrated experiences in the park — slow down and take your time here, especially at the gorilla habitat, which is genuinely one of the best in any zoo or theme park.',
+    funFact: 'The trail was designed by real conservationists alongside Imagineers, with habitat layouts based on actual African ecosystems rather than just aesthetic theming.'
+  },
+  'ak-11': {
+    description: 'A self-guided walking trail through the ruins of a fictional maharajah\'s palace, home to Komodo dragons, Malayan tapirs, fruit bats, and Bengal tigers.',
+    tip: 'The tiger habitat here is one of the best in any theme park, with multiple viewing areas and glass panels putting you just inches from the animals — give yourself real time here.',
+    funFact: 'The "ruins" theming throughout the trail tells a deliberate story of a palace reclaimed by nature, with real plant overgrowth incorporated into the architecture by design.'
+  },
+  'ak-12': {
+    description: 'A nighttime projection show on the Tree of Life itself, with animals and imagery animated across its sculpted trunk and branches.',
+    tip: 'Only runs seasonally, from mid-November through early March, when the park stays open late enough for it to get properly dark — check the app to see if it\'s currently running.',
+    funFact: 'The same tree used for these nighttime projections has more than 300 hand-carved animal figures sculpted into its bark, visible during the day as well.'
+  },
+  'ak-18': {
+    description: 'A park-wide interactive activity where you pick up a Field Guide and visit stations throughout Animal Kingdom to complete simple challenges and earn badges from "troop leaders."',
+    tip: 'A great way to fill slower stretches of the day, especially when ride lines get long — pick up the guide early and tackle a station or two between bigger attractions.',
+    funFact: 'There are dozens of different badges to earn scattered across every land in the park, and completionists can spend an entire extra day just tracking them all down.'
+  },
+  'ak-19': {
+    description: 'An interactive play experience inside Conservation Station where guests join Bluey and Bingo in recreations of the show\'s most iconic family games.',
+    tip: 'A virtual queue is required during the initial opening period — grab a spot through the My Disney Experience app at 7:00 a.m. or 10:00 a.m. on your visit day.',
+    funFact: 'This experience took over the space previously used for backstage animal care exhibits, continuing Conservation Station\'s long history of changing its focus over the years.'
+  },
+  'ak-20': {
+    description: 'A real train that carries guests from Harambe Station in Africa to Conservation Station, passing through backstage glimpses of animal habitats along the way.',
+    tip: 'This is the only way to reach Conservation Station — there\'s no walking path, so budget the round-trip ride time into your plans if you want to see Bluey\'s Wild World.',
+    funFact: 'The train genuinely passes near real backstage animal care areas, meaning what you glimpse out the window during the ride isn\'t themed set dressing.'
+  },
+  'ak-21': {
+    description: 'A live outdoor bird show at the Caravan Stage featuring trained birds of prey and exotic species flying directly over and around the audience.',
+    tip: 'Sit toward the back or middle rather than the very front row if you\'d rather not have a bird fly inches above your head — though that\'s honestly half the fun for most guests.',
+    funFact: 'Many of the birds featured were rescued or rehabilitated before being trained for the show, and several species featured can\'t be found in any other Disney attraction.'
+  },
+  'ak-22': {
+    description: 'A simple, themed meet-and-greet with Mickey and Minnie dressed as explorers, set inside a small expedition-themed headquarters.',
+    tip: 'Usually a quick, low-wait meet — a good casual stop if you\'re passing through Discovery Island rather than something to plan your whole day around.',
+    funFact: 'The "expedition" theming throughout the queue ties into the park\'s overall conservation and exploration storyline, distinguishing it from character meets at the other parks.'
+  },
+  'ak-23': {
+    description: 'A small, self-guided viewing area showcasing cotton-top tamarins, a tiny and endangered primate species.',
+    tip: 'Easy to walk past without noticing — worth a quick stop if you\'re already in Asia and have a couple of spare minutes.',
+    funFact: 'Cotton-top tamarins are genuinely one of the most endangered primate species in the world, and this exhibit ties directly into Disney\'s real conservation funding efforts for the species.'
+  },
+  'ak-24': {
+    description: 'A series of lush garden habitats right at the park entrance, featuring giant anteaters, swamp wallabies, and other unusual species as your very first stop in the park.',
+    tip: 'Easy to rush past on the way to bigger rides, but worth a slow look on your way out at the end of the day when crowds have thinned.',
+    funFact: 'The Oasis was deliberately designed as a decompression zone, meant to slow guests down and shift their mindset before they reach the wide-open energy of Discovery Island.'
+  },
 };
