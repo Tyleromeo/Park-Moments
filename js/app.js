@@ -136,6 +136,10 @@ function renderItemRow(item, checks, opts = {}) {
     : item.status === 'reopening'
     ? '<span class="status-tag status-reopening">Reopening soon</span>'
     : '';
+  const singlePassInfo = (typeof SINGLE_PASS_RIDES !== 'undefined') ? SINGLE_PASS_RIDES[item.id] : null;
+  const singlePassTag = singlePassInfo
+    ? `<span class="status-tag status-singlepass" title="Requires Lightning Lane Single Pass, separate from Multi Pass">⚡ Single Pass</span>`
+    : '';
   const count = Storage.getCount(item.id);
   const hasSongPicker = !!SONG_PICKERS[item.id];
   const songLog = Storage.getSongLog(item.id);
@@ -190,6 +194,13 @@ function renderItemRow(item, checks, opts = {}) {
     <button class="play-quicklaunch-btn" data-id="${item.id}">🎮 Waiting in line? Play trivia</button>
   ` : '';
 
+  const singlePassHtml = singlePassInfo ? `
+    <div class="detail-block singlepass-block">
+      <strong>⚡ Lightning Lane Single Pass required</strong><br/>
+      This ride isn't included in the daily Multi Pass — it's a separate pay-per-ride purchase, typically ${singlePassInfo.priceRange} per person. Prices change daily based on demand; check the app for today's rate.
+    </div>
+  ` : '';
+
   const detailPanelHtml = (hasInfo || isRideType) ? `
     <div class="item-detail-panel" id="detail-${item.id}" hidden>
       ${details ? `
@@ -197,6 +208,7 @@ function renderItemRow(item, checks, opts = {}) {
         <p class="detail-block"><strong>💡 Tip</strong><br/>${details.tip}</p>
         <p class="detail-block"><strong>✨ Fun fact</strong><br/>${details.funFact}</p>
       ` : ''}
+      ${singlePassHtml}
       ${menuHtml}
       ${playPromptHtml}
     </div>
@@ -229,7 +241,7 @@ function renderItemRow(item, checks, opts = {}) {
         <button class="item" data-id="${item.id}" aria-pressed="${isDone}" aria-label="${item.name}${isDone ? ' — completed' : ''}">
           <span class="item-check" aria-hidden="true">${checkIcon}</span>
           <span class="item-body">
-            <span class="item-name">${item.name}${statusTag}</span>
+            <span class="item-name">${item.name}${statusTag}${singlePassTag}</span>
             <span class="item-meta">${item.meta}${songLog.length ? ` · <span class="song-tag-inline">${songLog[songLog.length - 1]}</span>` : ''}${showtimeOverride ? ` · <span class="song-tag-inline">Today: ${showtimeOverride}</span>` : ''}</span>
           </span>
           <span class="badge ${badge.cls}">${badge.label}</span>
@@ -405,19 +417,69 @@ function renderPark() {
   }
 
   // Sections — starred items excluded (shown in Must-Dos above), and only
-  // items matching the active category tab are shown
-  park.sections.forEach(section => {
-    const remainingItems = section.items.filter(item =>
-      !Storage.isStarred(item.id) && categoryForBadge(item.badge) === activeCategory
-    );
-    if (remainingItems.length === 0) return;
+  // items matching the active category tab are shown.
+  // The Rides tab specifically splits into Thrill Rides and Family Rides
+  // sections (ignoring the data file's original section groupings),
+  // while Shows and Food keep their normal section-based layout.
+  if (activeCategory === 'rides') {
+    // Single Pass summary — every ride in this park requiring Lightning
+    // Lane Single Pass, regardless of starred status, so it's a complete
+    // reference even if someone's must-do list overlaps with it.
+    const allParkRideIds = park.sections.flatMap(s => s.items)
+      .filter(item => categoryForBadge(item.badge) === 'rides')
+      .map(i => i.id);
+    const singlePassInPark = allParkRideIds
+      .filter(id => SINGLE_PASS_RIDES[id])
+      .map(id => {
+        const item = park.sections.flatMap(s => s.items).find(i => i.id === id);
+        return { item, info: SINGLE_PASS_RIDES[id] };
+      });
 
-    html += `<div class="section"><h2 class="section-heading">${section.name}</h2>`;
-    remainingItems.forEach(item => {
-      html += renderItemRow(item, checks);
+    if (singlePassInPark.length > 0) {
+      html += `
+        <div class="singlepass-banner">
+          <div class="singlepass-banner-title">⚡ Lightning Lane Single Pass rides in ${park.shortName}</div>
+          <p class="singlepass-banner-sub">These aren't included in Multi Pass — each is a separate pay-per-ride purchase.</p>
+          ${singlePassInPark.map(({ item, info }) => `
+            <div class="singlepass-row">
+              <span>${item.name}</span>
+              <span class="singlepass-price">${info.priceRange}</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    const allRideItems = park.sections.flatMap(s => s.items)
+      .filter(item => !Storage.isStarred(item.id) && categoryForBadge(item.badge) === 'rides');
+
+    const thrillItems = allRideItems.filter(i => i.badge === 'thrill');
+    const familyItems = allRideItems.filter(i => i.badge === 'family');
+
+    if (thrillItems.length > 0) {
+      html += `<div class="section"><h2 class="section-heading">Thrill Rides</h2>`;
+      thrillItems.forEach(item => { html += renderItemRow(item, checks); });
+      html += `</div>`;
+    }
+    if (familyItems.length > 0) {
+      html += `<div class="section"><h2 class="section-heading">Family Rides</h2>`;
+      familyItems.forEach(item => { html += renderItemRow(item, checks); });
+      html += `</div>`;
+    }
+  } else {
+    park.sections.forEach(section => {
+      const remainingItems = section.items.filter(item =>
+        !Storage.isStarred(item.id) && categoryForBadge(item.badge) === activeCategory
+      );
+      if (remainingItems.length === 0) return;
+
+      html += `<div class="section"><h2 class="section-heading">${section.name}</h2>`;
+      remainingItems.forEach(item => {
+        html += renderItemRow(item, checks);
+      });
+      html += `</div>`;
     });
-    html += `</div>`;
-  });
+  }
 
   // Notes
   const noteVal = notes[activeParkId] || '';
@@ -1712,6 +1774,6 @@ function maybeShowStarHint() {
   if (seen) return;
   localStorage.setItem('rd_star_hint_seen_v1', '1');
   setTimeout(() => {
-    showToast('★ Starred rides are suggested must-dos — tap any star to add or remove your own', { wrap: true, duration: 4200 });
+    showToast('★ Tap the star on any ride, show, or food spot to add it to your must-dos', { wrap: true, duration: 4200 });
   }, 600);
 }

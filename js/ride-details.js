@@ -389,4 +389,90 @@ const RIDE_DETAILS = {
     tip: 'Le Cellier is one of the hardest table-service reservations to book in all of EPCOT — plan well ahead if you want a table.',
     funFact: 'The pavilion\'s landscaping was modeled after Canada\'s Butchart Gardens, a real and famous garden in British Columbia.'
   },
+  // ── Hollywood Studios ──
+  'hs-01': {
+    description: 'A sprawling, multi-room dark ride that drops you into the middle of a Star Wars battle between the Resistance and the First Order — part ride, part walk-through, part live theater.',
+    tip: 'Widely considered the single best attraction at Walt Disney World. It only offers Lightning Lane Single Pass (no standby skip), so either rope drop it at Early Entry or be ready to pay for the separate pass.',
+    funFact: 'The ride uses several entirely different ride systems stitched together into one continuous experience — including a trackless vehicle segment, a drop sequence, and a full-scale walk-through set.'
+  },
+  'hs-02': {
+    description: 'A flight-simulator ride where you and your party take on roles as pilot, gunner, or engineer aboard the actual Millennium Falcon.',
+    tip: 'Volunteer to be the pilot if you can — it\'s the most interactive role and lets you actually steer. A May 2026 update added new Mandalorian and Grogu-themed missions, so the storyline now varies more than before.',
+    funFact: 'The cockpit set is a near screen-accurate recreation of the Millennium Falcon from the films, right down to the placement of switches and panels.'
+  },
+  'hs-03': {
+    description: 'A family-friendly outdoor coaster themed to Slinky Dog from Toy Story, winding through a backyard built at "toy scale."',
+    tip: 'One of the most popular family coasters at Walt Disney World — ride first thing at rope drop, since waits regularly climb past an hour by mid-morning.',
+    funFact: 'The ride\'s spring-like dips are designed to recreate the bouncing motion of an actual stretched-out Slinky Dog toy.'
+  },
+  'hs-04': {
+    description: 'A drop ride themed to The Twilight Zone, sending you up and down a haunted hotel elevator shaft in a randomized, unpredictable sequence of falls.',
+    tip: 'The randomized drop pattern means no two rides feel exactly the same — a good one to revisit more than once if you can.',
+    funFact: 'The pre-show walkthrough, including the eerie hotel lobby and library, was designed with as much care as the ride itself and is easy to miss if you rush through it.'
+  },
+  'hs-05': {
+    description: 'A high-speed launch coaster that rockets you from 0 to 60 mph in under three seconds, now reimagined around The Muppets and their chaotic dash to a concert.',
+    tip: 'Reopened May 26, 2026 after the previous Aerosmith version permanently closed — expect high demand all summer as fans check out the new theming.',
+    funFact: 'The ride track and launch system are unchanged from the original version — only the story, music, and pre-show changed, including the addition of Disney\'s first-ever Audio-Animatronic of Scooter the Muppet.'
+  },
+  'hs-06': {
+    description: 'An interactive 3D shooting-gallery ride where you compete in a series of carnival-style games alongside Toy Story characters.',
+    tip: 'Your score genuinely matters here — there are secret high-value targets some scenes hide, so look for them if you want bragging rights.',
+    funFact: 'Each ride vehicle holds two riders side by side, each with their own individual screen and shooter, so you\'re technically playing a separate game from whoever\'s next to you.'
+  },
+  'hs-07': {
+    description: 'A simple spinning ride themed to a toy alien-claw game, swinging riders around in saucers driven by Little Green Men.',
+    tip: 'A gentle, short ride best suited to younger kids — skip it if your group is short on time and prioritizing bigger attractions instead.',
+    funFact: 'The ride sits on the site of the former Honey, I Shrunk the Kids Movie Set Adventure, repurposed when Toy Story Land was built.'
+  },
+  'hs-08': {
+    description: 'A trackless dark ride inside the Chinese Theatre that shrinks you to cartoon size and sends you through a chaotic adventure alongside Mickey and Minnie.',
+    tip: 'No height requirement and genuinely fun for all ages — a great choice early in the day before lines build.',
+    funFact: 'It was the first ride-through attraction in Disney park history built entirely around classic Mickey Mouse cartoon shorts rather than a feature film.'
+  },
+  'hs-20': {
+    description: 'A 3D motion-simulator ride that puts you aboard a Star Wars Starspeeder for a randomized space journey — the destinations and characters change from ride to ride.',
+    tip: 'Usually a walk-on or short wait even during busy times, making it an easy, reliable choice if you want a guaranteed quick ride.',
+    funFact: 'There are over 50 possible story combinations programmed into the ride, meaning two visits rarely play out exactly the same way.'
+  },
+  'hs-09': {
+    description: 'A live stunt show re-enacting scenes from Raiders of the Lost Ark, with real performers, fire effects, and a giant rolling boulder.',
+    tip: 'Runs multiple times daily — check the app for exact times since the schedule shifts, and arrive 20-30 minutes early for a good seat.',
+    funFact: 'Audience members are sometimes pulled on stage to play extras in the action, making each showing slightly different depending on who gets picked.'
+  },
+  'hs-10': {
+    description: 'A nighttime spectacular combining live performers, pyrotechnics, water effects, and classic Disney villains across an outdoor amphitheater stage.',
+    tip: 'Seating fills up well before showtime on busy nights — arrive at least 30-45 minutes early, or consider a Fantasmic dining package for guaranteed seats.',
+    funFact: 'The show uses a massive water screen as a surface for projected effects, a technique that requires careful timing with the live performers on stage.'
+  },
+  'hs-12': {
+    description: 'A sing-along stage show retelling the story of Frozen through film clips and on-screen lyrics, hosted by live performers who keep the audience engaged.',
+    tip: 'The show runs over 30 minutes, longer than guests often expect — a good pick if you want a substantial sit-down break in the air conditioning.',
+    funFact: 'Despite the show\'s name, it actually walks through the entire plot of the film, not just a single musical sequence.'
+  },
+  'hs-21': {
+    description: 'A live stage show where classic Disney villains argue over who has been treated most unfairly by their stories, performed with full musical numbers.',
+    tip: 'Opened in May 2025 in the Sunset Showcase theater — newer and less crowded than some of the park\'s longer-running shows, so it\'s often easier to walk into without a long wait.',
+    funFact: 'The show features a rotating cast of villain cameos beyond its three lead characters, giving longtime Disney fans plenty of background appearances to spot.'
+  },
+  'hs-22': {
+    description: 'An interactive stage show where Mickey and Minnie set off to track down Goofy, Daisy, and Pluto in time for a big celebration, with original songs and audience participation throughout.',
+    tip: 'Built for young kids who want to move, clap, and dance rather than sit still — a great pick if you have little ones who need to burn some energy.',
+    funFact: 'The show runs eight times daily and is the centerpiece attraction of the newly reimagined Walt Disney Studios area that opened the same day, May 26, 2026.'
+  },
+  'hs-23': {
+    description: 'A behind-the-scenes exhibit and short film exploring the history of Walt Disney Animation Studios and the artistry behind classic and modern Disney films.',
+    tip: 'A relaxed, air-conditioned stop with no wait most of the time — easy to slot in in between bigger attractions.',
+    funFact: 'The space has changed names and focus several times over the decades, each version reflecting whatever Disney animated era was most current at the time.'
+  },
+  'hs-13': {
+    description: 'A hands-on workshop experience where guests build their own custom lightsaber from a selection of parts, guided by in-character "Gatherers."',
+    tip: 'Reservations are recommended and the experience runs about 20 minutes — budget real time for this, it\'s not a quick walk-up purchase.',
+    funFact: 'Each build station has its own unique selection of parts and crystal colors, so the build process and final result genuinely differ from station to station.'
+  },
+  'hs-14': {
+    description: 'A build-your-own droid experience where you assemble and personalize a small rolling droid from parts moving along a conveyor system.',
+    tip: 'A fun, lower-cost alternative to the lightsaber workshop if you want a Galaxy\'s Edge souvenir without the bigger price tag.',
+    funFact: 'The droid parts move along a real conveyor belt system inspired by actual droid depot designs seen throughout the Star Wars films.'
+  },
 };

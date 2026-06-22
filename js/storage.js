@@ -107,25 +107,19 @@ const Storage = {
         this.setActiveTrip(activeId);
       } else {
         activeId = this.createTrip('My Disney Trip');
-        this._seedStarsForTrip(activeId);
+        // No default must-dos — the star list starts empty. People build
+        // their own must-do list by tapping the star on whatever matters
+        // to them.
       }
     }
     return activeId;
   },
 
-  // Suggests starting must-dos (from each item's `must` flag) for a
-  // brand-new trip only. Existing trips are never touched by this.
+  // Previously seeded default must-dos from each item's `must` flag.
+  // Kept as a no-op (rather than deleted) so any existing calls to it
+  // elsewhere don't break — the star list now always starts empty.
   _seedStarsForTrip(tripId) {
-    const allData = this.getAllTripsData();
-    const tripData = allData[tripId];
-    if (!tripData) return;
-    PARKS.forEach(park => park.sections.forEach(section =>
-      section.items.forEach(item => {
-        if (item.must) tripData.stars[item.id] = true;
-      })
-    ));
-    allData[tripId] = tripData;
-    this.saveAllTripsData(allData);
+    // Intentionally does nothing.
   },
 
   // ── Internal: get/save the current trip's data blob ──────────────────

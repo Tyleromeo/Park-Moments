@@ -16,6 +16,22 @@
 // Typical operating hours per park. Real daily hours vary by season and
 // special events — these are common baselines, not a live schedule.
 // Always confirm in the My Disney Experience app before your visit.
+// Lightning Lane Single Pass — Disney's pay-per-ride skip-the-line option
+// for the highest-demand attractions, separate from the daily Multi Pass.
+// Prices are typical ranges, not live pricing (Disney adjusts these daily
+// based on date and demand) — always confirm in the My Disney Experience
+// or Disneyland app before your visit.
+const SINGLE_PASS_RIDES = {
+  'mk-01': { priceRange: '$15–$20' }, // Seven Dwarfs Mine Train
+  'mk-13': { priceRange: '$20–$30' }, // TRON Lightcycle / Run
+  'mk-14': { priceRange: '$15–$20' }, // Tiana's Bayou Adventure
+  'ep-01': { priceRange: '$20–$30' }, // Guardians of the Galaxy: Cosmic Rewind
+  'hs-01': { priceRange: '$20–$30' }, // Star Wars: Rise of the Resistance
+  'ak-01': { priceRange: '$20–$25' }, // Avatar Flight of Passage
+  'dl-03': { priceRange: '$15–$35' }, // Star Wars: Rise of the Resistance (Disneyland)
+  'dca-01': { priceRange: '$18–$28' }, // Radiator Springs Racers
+};
+
 const TYPICAL_PARK_HOURS = {
   mk:  { early: '8:30 AM (Early Entry, resort guests)', open: '9:00 AM', close: '9:00 PM (later in busy season, often 10–11 PM)' },
   ep:  { early: '8:30 AM (Early Entry, resort guests)', open: '9:00 AM', close: '9:00 PM' },
@@ -709,6 +725,202 @@ const MENU_DATA = {
       { name: 'Maple Popcorn' },
     ]
   },
+  'hs-15': {
+    tier: '$',
+    items: [
+      { name: 'Blue Milk (plant-based)' },
+      { name: 'Green Milk (plant-based)' },
+    ]
+  },
+  'hs-16': {
+    tier: '$',
+    items: [
+      { name: 'Ronto Wrap (pork & sausage, lunch/dinner)' },
+      { name: 'Ronto Morning Wrap (sausage, eggs, cheese, breakfast)' },
+      { name: 'Tatooine Sunset Cocktail' },
+      { name: 'Yobshrimp Noodle Salad' },
+    ]
+  },
+  'hs-17': {
+    tier: '$$',
+    items: [
+      { name: 'Totchos (tater tot nachos)' },
+      { name: 'Lunch Box Tart' },
+      { name: 'BBQ Brisket Melt' },
+      { name: 'Totchos with BBQ Pork' },
+      { name: 'Cookies & Cream Milkshake' },
+    ]
+  },
+  'hs-18': {
+    tier: '$$',
+    items: [
+      { name: 'Fuzzy Tauntaun Cocktail' },
+      { name: 'Jedi Mind Trick Cocktail' },
+      { name: 'Outer Rim Cocktail' },
+      { name: 'Yub Nub (non-alcoholic)' },
+      { name: 'Batuu Bits (snack mix)' },
+      { name: 'Smugglers Sampler' },
+    ]
+  },
+  'hs-19': {
+    tier: '$$',
+    items: [
+      { name: 'Mom\'s Old Fashioned Pot Roast' },
+      { name: 'S\'Mores French Toast (breakfast)' },
+      { name: 'Golden Fried Chicken' },
+      { name: 'Meatloaf' },
+      { name: 'Today\'s Vegetable Plate' },
+      { name: 'S\'mores Milkshake' },
+      { name: 'PB&J Milkshake' },
+    ]
+  },
+  'hs-24': {
+    tier: '$$',
+    items: [
+      { name: 'Felucian Garden Spread' },
+      { name: 'Endorian Chicken "Tip Yip"' },
+      { name: 'Batuu Beef Combo' },
+      { name: 'Roasted Vegetable Salad' },
+      { name: 'Galactic Lava Cake' },
+    ]
+  },
+  'hs-25': {
+    tier: '$$$',
+    items: [
+      { name: 'Famous Cobb Salad' },
+      { name: 'Filet Mignon with Mushroom Risotto' },
+      { name: 'Grilled Ōra King Salmon' },
+      { name: 'Plant-Based Shepherd\'s Pie' },
+      { name: 'Free Range Chicken & Dumplings' },
+      { name: 'Grapefruit Cake' },
+      { name: 'Orange-Hazelnut Chocolate Cake' },
+      { name: 'Crème Brûlée' },
+    ]
+  },
+  'hs-26': {
+    tier: '$$',
+    items: [
+      { name: 'Feature Film Burger' },
+      { name: 'Reuben Sandwich' },
+      { name: 'Crispy Onion Rings' },
+      { name: 'Pasta with Chicken or Shrimp' },
+      { name: 'Smore\'s Shake' },
+    ]
+  },
+  'hs-27': {
+    tier: '$$$',
+    items: [
+      { name: 'Chicken alla Parmigiana' },
+      { name: 'Spaghetti & Meatballs' },
+      { name: 'Wood-Fired Pizza' },
+      { name: 'Seafood Pasta' },
+      { name: 'Mini Cannoli Trio' },
+      { name: 'Tiramisu' },
+    ]
+  },
+  'hs-28': {
+    tier: '$$$',
+    items: [
+      { name: 'Character Dining Buffet (breakfast, lunch, dinner)' },
+      { name: 'Carved Meats' },
+      { name: 'Seasonal Salads' },
+      { name: 'Kids\' Buffet Favorites' },
+      { name: 'Mickey-Shaped Desserts' },
+    ]
+  },
+  'hs-29': {
+    tier: '$$',
+    items: [
+      { name: 'Shrimp & Pork Carnitas Tacos' },
+      { name: 'Chicken Club Sandwich' },
+      { name: 'Buffalo Chicken Grilled Cheese' },
+      { name: 'Plant-Based California Burger' },
+      { name: 'Watermelon Margarita' },
+    ]
+  },
+  'hs-30': {
+    tier: '$$',
+    items: [
+      { name: 'Cheeseburger' },
+      { name: 'Chicken Strips & Fries' },
+      { name: 'Teriyaki Chicken Bowl' },
+      { name: 'Italian Sub Sandwich' },
+      { name: 'Caesar Salad' },
+      { name: 'Free Refills (fountain drinks)' },
+    ]
+  },
+  'hs-31': {
+    tier: '$$$',
+    items: [
+      { name: 'All-You-Care-To-Enjoy BBQ' },
+      { name: 'Smoked Brisket' },
+      { name: 'BBQ Pulled Pork' },
+      { name: 'Cornbread' },
+      { name: 'Mac & Cheese' },
+      { name: 'Banana Pudding' },
+    ]
+  },
+  'hs-32': {
+    tier: '$$',
+    items: [
+      { name: 'Classic Burger' },
+      { name: 'Plant-Based Burger' },
+      { name: 'BBQ Bacon Cheeseburger' },
+      { name: 'Loaded Fries' },
+    ]
+  },
+  'hs-33': {
+    tier: '$',
+    items: [
+      { name: 'Craft Beer Flight' },
+      { name: 'Pretzel Bites' },
+      { name: 'Charcuterie Board' },
+      { name: 'Seasonal Cider' },
+    ]
+  },
+  'hs-34': {
+    tier: '$$',
+    items: [
+      { name: 'Pepperoni Flatbread' },
+      { name: 'Cheese Pizza' },
+      { name: 'Greek Salad' },
+      { name: 'Caesar Salad with Chicken' },
+    ]
+  },
+  'hs-35': {
+    tier: '$$',
+    items: [
+      { name: 'Smoked Turkey Leg' },
+      { name: 'BBQ Pork Sandwich' },
+      { name: 'Onion Rings' },
+      { name: 'Fountain Drinks' },
+    ]
+  },
+  'hs-36': {
+    tier: '$',
+    items: [
+      { name: 'Carrot Cake Whoopie Pie' },
+      { name: 'Croissants' },
+      { name: 'Specialty Coffee' },
+      { name: 'Cupcakes' },
+    ]
+  },
+  'hs-37': {
+    tier: '$',
+    items: [
+      { name: 'All-Beef Hot Dog' },
+      { name: 'Frozen Beverages' },
+      { name: 'Soft Drinks' },
+    ]
+  },
+  'hs-38': {
+    tier: '$',
+    items: [
+      { name: 'Soft-Serve Ice Cream' },
+      { name: 'Ice Cream Float' },
+      { name: 'Sundaes' },
+    ]
+  },
 };
 
 const TYPICAL_SHOWTIMES = {
@@ -718,7 +930,7 @@ const TYPICAL_SHOWTIMES = {
   'mk-18': ['11:30 AM', '4:00 PM'],
   'hs-09': ['9:30 AM', '11:30 AM', '2:00 PM', '4:00 PM'],
   'hs-10': ['Varies — typically 1–2 shows nightly, check app'],
-  'hs-11': ['Varies — one nightly show, usually around park close'],
+  'hs-21': ['Varies — multiple showtimes daily, check app'],
   'hs-12': ['Continuous throughout the day — just walk up'],
   'ep-15': ['9:00 PM (seasonal, check app for current schedule)'],
   'ak-08': ['11:00 AM', '1:00 PM', '3:00 PM', '5:00 PM'],
@@ -870,39 +1082,62 @@ const PARKS = [
         name: 'Must-dos',
         items: [
           { id: 'hs-01', name: 'Star Wars: Rise of the Resistance', meta: "Galaxy's Edge · 40\" min height", badge: 'thrill', must: true },
-          { id: 'hs-02', name: 'Millennium Falcon: Smugglers Run', meta: "Galaxy's Edge · 38\" min height", badge: 'thrill', must: true },
+          { id: 'hs-02', name: 'Millennium Falcon: Smugglers Run', meta: "Galaxy's Edge · 38\" min height — new Mandalorian & Grogu missions May 2026", badge: 'thrill', must: true, status: 'new' },
           { id: 'hs-03', name: 'Slinky Dog Dash', meta: 'Toy Story Land · 38" min height', badge: 'thrill', must: true },
           { id: 'hs-04', name: 'Tower of Terror', meta: 'Sunset Blvd · 40" min height', badge: 'thrill', must: true },
-          { id: 'hs-05', name: "Rock 'n' Roller Coaster", meta: 'Sunset Blvd · 48" min height', badge: 'thrill', must: true },
+          { id: 'hs-05', name: "Rock 'n' Roller Coaster Starring The Muppets", meta: 'Sunset Blvd · 48" min height — reopened May 26, 2026', badge: 'thrill', must: true, status: 'new' },
         ]
       },
       {
-        name: 'Family rides & shows',
+        name: 'Family rides',
         items: [
           { id: 'hs-06', name: 'Toy Story Mania!', meta: 'Toy Story Land · all ages', badge: 'family' },
           { id: 'hs-07', name: 'Alien Swirling Saucers', meta: 'Toy Story Land · 32" min height', badge: 'family' },
-          { id: 'hs-08', name: 'Mickey & Minnie\'s Runaway Railway', meta: 'Hollywood · all ages', badge: 'family' },
-          { id: 'hs-09', name: 'Indiana Jones Epic Stunt Spectacular', meta: 'Echo Lake · live show, check times', badge: 'show' },
-          { id: 'hs-10', name: 'Fantasmic!', meta: 'Hollywood Hills Amphitheater · evenings', badge: 'show' },
-          { id: 'hs-11', name: 'Star Wars: A Galactic Spectacular', meta: 'Fireworks show · evenings', badge: 'show' },
-          { id: 'hs-12', name: 'For the First Time in Forever: A Frozen Sing-Along', meta: 'Echo Lake · all ages', badge: 'show' },
+          { id: 'hs-08', name: 'Mickey & Minnie\'s Runaway Railway', meta: 'Hollywood Blvd (Chinese Theatre) · all ages', badge: 'family' },
+          { id: 'hs-20', name: 'Star Tours – The Adventures Continue', meta: 'Echo Lake · 40" min height, motion simulator', badge: 'family' },
+        ]
+      },
+      {
+        name: 'Shows & experiences',
+        items: [
+          { id: 'hs-09', name: 'Indiana Jones Epic Stunt Spectacular', meta: 'Echo Lake · live stunt show, multiple times daily', badge: 'show' },
+          { id: 'hs-10', name: 'Fantasmic!', meta: 'Hollywood Hills Amphitheater · evenings, nightly', badge: 'show' },
+          { id: 'hs-12', name: 'For the First Time in Forever: A Frozen Sing-Along', meta: 'Echo Lake (Hyperion Theater) · all ages', badge: 'show' },
+          { id: 'hs-21', name: 'Disney Villains: Hocus Pocus & Wicked Ways', meta: 'Sunset Showcase theater · live stage show, opened May 2025', badge: 'show', status: 'new' },
+          { id: 'hs-22', name: 'Disney Jr. Mickey Mouse Clubhouse Live!', meta: 'The Walt Disney Studios · opened May 26, 2026', badge: 'show', status: 'new' },
+          { id: 'hs-23', name: 'Walt Disney Presents', meta: 'Animation Courtyard area · behind-the-scenes exhibit & film', badge: 'show' },
         ]
       },
       {
         name: "Galaxy's Edge",
         items: [
-          { id: 'hs-13', name: 'Build a lightsaber at Savi\'s Workshop', meta: '$259.99 · reservations required', badge: 'character' },
-          { id: 'hs-14', name: 'Build a droid at Droid Depot', meta: '$119.99 · walk-up or reservations', badge: 'character' },
-          { id: 'hs-15', name: 'Blue or green milk at Milk Stand', meta: "Galaxy's Edge · plant-based drinks", badge: 'food' },
+          { id: 'hs-13', name: 'Build a lightsaber at Savi\'s Workshop', meta: '~$260 · reservations required', badge: 'character' },
+          { id: 'hs-14', name: 'Build a droid at Droid Depot', meta: '~$120 · walk-up or reservations', badge: 'character' },
         ]
       },
       {
         name: 'Food & drink',
         items: [
+          { id: 'hs-15', name: 'Blue or green milk at Milk Stand', meta: "Galaxy's Edge · plant-based drinks", badge: 'food' },
           { id: 'hs-16', name: 'Ronto Wrap at Ronto Roasters', meta: "Galaxy's Edge · must-eat", badge: 'food', must: true },
-          { id: 'hs-17', name: 'Tater tot nachos at Woody\'s Lunch Box', meta: 'Toy Story Land', badge: 'food' },
-          { id: 'hs-18', name: "Oga's Cantina", meta: "Galaxy's Edge · reservations required, 21+ after 9pm", badge: 'food' },
-          { id: 'hs-19', name: '50\'s Prime Time Café', meta: 'Hollywood · reservations suggested', badge: 'food' },
+          { id: 'hs-17', name: 'Tater tot nachos (Totchos) at Woody\'s Lunch Box', meta: 'Toy Story Land', badge: 'food' },
+          { id: 'hs-18', name: "Oga's Cantina", meta: "Galaxy's Edge · reservations recommended, 21+ after 9pm", badge: 'food' },
+          { id: 'hs-19', name: "50's Prime Time Café", meta: 'Echo Lake · reservations suggested', badge: 'food' },
+          { id: 'hs-24', name: 'Docking Bay 7 Food and Cargo', meta: "Galaxy's Edge · creative quick-service", badge: 'food' },
+          { id: 'hs-25', name: 'Hollywood Brown Derby', meta: 'Hollywood Blvd · signature dining, the park\'s best food', badge: 'food' },
+          { id: 'hs-26', name: 'Sci-Fi Dine-In Theater Restaurant', meta: 'Commissary Lane · eat inside a 1950s drive-in', badge: 'food' },
+          { id: 'hs-27', name: 'Mama Melrose\'s Ristorante Italiano', meta: 'Grand Avenue · Italian table-service', badge: 'food' },
+          { id: 'hs-28', name: 'Hollywood & Vine', meta: 'Hollywood Blvd · character dining', badge: 'food' },
+          { id: 'hs-29', name: 'ABC Commissary', meta: 'Commissary Lane · studio-cafeteria quick-service', badge: 'food' },
+          { id: 'hs-30', name: 'Backlot Express', meta: 'Echo Lake · large quick-service, free refills', badge: 'food' },
+          { id: 'hs-31', name: 'Roundup Rodeo BBQ', meta: 'Toy Story Land · all-you-care-to-enjoy BBQ', badge: 'food' },
+          { id: 'hs-32', name: 'Rosie\'s All-American Café', meta: 'Sunset Blvd · burgers & quick-service', badge: 'food' },
+          { id: 'hs-33', name: 'Baseline Tap House', meta: 'Grand Avenue · craft beer & appetizers, relaxed', badge: 'food' },
+          { id: 'hs-34', name: 'Catalina Eddie\'s', meta: 'Sunset Blvd · pizza & flatbreads', badge: 'food' },
+          { id: 'hs-35', name: 'Fairfax Fare', meta: 'Sunset Blvd · BBQ & turkey legs', badge: 'food' },
+          { id: 'hs-36', name: 'Starring Rolls Café', meta: 'Hollywood Blvd · pastries & coffee', badge: 'food' },
+          { id: 'hs-37', name: 'Min & Bill\'s Dockside Diner', meta: 'Echo Lake · hot dogs & frozen drinks', badge: 'food' },
+          { id: 'hs-38', name: 'Dinosaur Gertie\'s Ice Cream of Extinction', meta: 'Echo Lake · soft-serve kiosk', badge: 'food' },
         ]
       }
     ]
