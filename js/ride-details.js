@@ -77,4 +77,90 @@ const RIDE_DETAILS = {
     tip: 'Choose the calmer "Test Track Presented by Chevrolet" experience if you\'re sensitive to sudden motion — it\'s still a fun ride without as much jostling.',
     funFact: 'The track design loosely mimics a real automotive proving ground, including simulated brake tests, hairpin turns, and a hill climb before the high-speed outdoor finale.'
   },
+  // ── Magic Kingdom (additional) ──
+  'mk-07': {
+    description: 'A spinning dark ride where you and a riding partner aim laser blasters at targets while battling the Evil Emperor Zurg alongside Buzz Lightyear.',
+    tip: 'Twist the handle on your ride vehicle to spin and line up better shots — most riders never realize the car rotates on its own axis.',
+    funFact: 'A 2025 refresh added a new robot character named Buddy and onboard score monitors, plus a handful of secret high-value targets that longtime fans still hunt for.'
+  },
+  'mk-10': {
+    description: 'A classic spinning ride where each guest controls their own flying elephant, raising and lowering it by hand as the ride circles around.',
+    tip: 'Capacity is higher than its Tomorrowland cousins (Astro Orbiter, Magic Carpets), so lines tend to move a bit faster — still worth doing early if you have young kids.',
+    funFact: 'Magic Kingdom actually runs two nearly identical Dumbo circles side by side to handle the demand, a setup unique to this park among the Disney resorts.'
+  },
+  'mk-11': {
+    description: 'A gas-powered go-kart ride that follows a fixed track around a winding Tomorrowland course — kids old enough can "drive" the car themselves.',
+    tip: 'The slow loading process means posted wait times often undersell how long you\'ll actually stand in line — it\'s usually a lower priority unless your kids are dying to drive.',
+    funFact: 'The cars are real gas-powered vehicles guided by a center rail, not pure simulators — meaning you can genuinely smell the exhaust as they idle in the queue.'
+  },
+  'mk-13': {
+    description: 'A high-speed indoor coaster where you straddle a motorcycle-style Lightcycle and race through a glowing digital world inspired by the TRON films.',
+    tip: 'The ride is intense but very short — if the standby line is over an hour, a Lightning Lane Single Pass is usually worth buying since the experience itself lasts under two minutes.',
+    funFact: 'It launches you through an iconic glowing canopy visible from much of Tomorrowland before plunging into a fully dark indoor section for the bulk of the ride.'
+  },
+  'mk-14': {
+    description: 'A log flume coaster that recently swapped its Br\'er Rabbit theming for a Princess and the Frog retheme, complete with a steep plunge near the end.',
+    tip: 'You will get wet, especially in the front row — if you\'re trying to stay dry for the rest of the day, sit toward the back or bring a poncho.',
+    funFact: 'The ride track and overall layout are unchanged from the original Splash Mountain — only the scenes, music, and characters were swapped during the retheme.'
+  },
+  'mk-19': {
+    description: 'A simple, classic walk-up meet and greet with Mickey and Minnie inside a small theater near the train station on Main Street.',
+    tip: 'Lightning Lane is usually overkill here — standby moves quickly most of the day since the meet-and-greet itself is brief.',
+    funFact: 'This spot once hosted the long-running Township Photography Studio, and parts of its old-timey set dressing were preserved when it became a meet-and-greet location.'
+  },
+  'mk-20': {
+    description: 'A character meet-and-greet hall in Fantasyland where you can meet rotating Disney princesses in individual themed rooms.',
+    tip: 'Lines build fast after opening since this is one of the few air-conditioned indoor character experiences — go early or use Lightning Lane if it\'s a priority.',
+    funFact: 'Each princess has her own dedicated room designed to match her film, so Cinderella\'s space looks nothing like the room you\'ll find Tiana or Rapunzel in.'
+  },
+  'mk-22': {
+    description: 'Not a ride — a walk-up snack stand in Adventureland serving the pineapple-soft-serve treat practically every Disney World guest has heard of.',
+    tip: 'Lines move fast even when they look long, since it\'s a simple grab-and-go item. Worth the short wait at least once per trip.',
+    funFact: 'Dole Whip has no dairy in its original pineapple form, making it one of the few classic Disney snacks that\'s naturally vegan.'
+  },
+  'mk-15': {
+    description: 'An afternoon parade through the park featuring elaborate floats themed to Disney stories, with a giant fire-breathing Maleficent dragon as the showstopping finale.',
+    tip: 'Crowds start staking out spots 30–60 minutes early. Frontierland and Liberty Square tend to be less packed than the hub if you don\'t mind a slightly less central view.',
+    funFact: 'The Maleficent dragon float is one of the largest and most complex parade floats ever built for the park, with a tail that sways and smoke effects timed to the music.'
+  },
+  'mk-16': {
+    description: 'The park\'s nighttime fireworks show over Cinderella Castle, combining pyrotechnics, music, and projections across the castle façade.',
+    tip: 'Arrive 45–60 minutes early for a good hub view on busy nights, or watch from Main Street for a more relaxed (if slightly more distant) vantage point.',
+    funFact: 'The castle itself becomes a projection screen during the show, with imagery mapped precisely onto its turrets and towers in sync with the soundtrack.'
+  },
+  'mk-17': {
+    description: 'A 4D theater show where Donald Duck accidentally steals Mickey\'s sorcerer hat and gets pulled through scenes from classic Disney movies, complete with in-theater wind, mist, and scent effects.',
+    tip: 'The theater seats nearly 500 people and cycles every 12 minutes, so waits rarely top one show — a reliable way to cool off and rest your feet midday.',
+    funFact: 'The screen is 150 feet wide, making it one of the largest purpose-built 3D screens ever installed in a theme park theater.'
+  },
+  'mk-18': {
+    description: 'A short, high-energy dance party that pops up on Main Street with Disney characters and a DJ, more of a spontaneous celebration than a formal parade.',
+    tip: 'Catch it on your way past Main Street rather than planning a special trip — it\'s brief and casual, not worth rearranging your day around.',
+    funFact: 'Unlike Magic Kingdom\'s scheduled parades, this street party rotates characters and music periodically, so it can look different from one visit to the next.'
+  },
+  'mk-21': {
+    description: 'A character meet-and-greet hall in Fantasyland where you can meet rotating Disney princesses in individual themed rooms.',
+    tip: 'Lines build fast after opening since this is one of the few air-conditioned indoor character experiences — go early or use Lightning Lane if it\'s a priority.',
+    funFact: 'Each princess has her own dedicated room designed to match her film, so Cinderella\'s space looks nothing like the room you\'ll find Tiana or Rapunzel in.'
+  },
+  'mk-23': {
+    description: 'A table-service restaurant inside Beast\'s castle, themed to Beauty and the Beast, serving French-inspired dishes in three distinct dining rooms.',
+    tip: 'Reservations book up months in advance — if you can\'t get one, walk-ups occasionally get seated during slow periods, especially for lunch.',
+    funFact: 'The dessert menu includes "The Grey Stuff," a direct callback to the line from the movie\'s title song — and yes, it really is delicious, despite what the song says.'
+  },
+  'mk-24': {
+    description: 'A classic Disney World snack — a smoked, oversized turkey leg sold from carts scattered around the park, no ride or show attached.',
+    tip: 'It\'s a genuinely big portion, easily shareable between two people if you don\'t want to commit to the whole thing solo.',
+    funFact: 'Turkey legs have been a Disney park staple since the 1990s and remain one of the most-photographed snacks in the entire resort, despite never appearing in any official menu campaign.'
+  },
+  'mk-25': {
+    description: 'A baseball-themed quick-service spot on Main Street known for hot dogs, corn dogs, and loaded fries.',
+    tip: 'A solid late-night option since it stays open near closing — convenient if you want a bite right before fireworks or on your way out of the park.',
+    funFact: 'The restaurant is named and themed after Casey at the Bat, the classic baseball poem, tying into Main Street\'s overall early-1900s Americana theme.'
+  },
+  'mk-26': {
+    description: 'A Liberty Square counter-service stop known for sweet and savory waffle creations, including seasonal pumpkin and funnel cake variations.',
+    tip: 'The seasonal specials (especially around Halloween) tend to be the standout menu items — check what\'s currently offered before defaulting to the classic options.',
+    funFact: 'Over the years the menu has cycled through several waffle and funnel cake combinations, with fans online tracking and ranking each version as it comes and goes.'
+  },
 };
