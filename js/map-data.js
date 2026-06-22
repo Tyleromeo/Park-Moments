@@ -35,20 +35,33 @@ const MAP_MARKERS = {
     { itemId: 'mk-12', lat: 28.421325, lng: -81.579661 }, // Under the Sea
     { itemId: 'mk-14', lat: 28.419189, lng: -81.584606 }, // Splash → Tiana's
     { itemId: 'mk-23', lat: 28.421383, lng: -81.580817 }, // Be Our Guest
+    { itemId: 'mk-11', lat: 28.41945,  lng: -81.579458 }, // Tomorrowland Speedway
+    { itemId: 'mk-19', lat: 28.418767, lng: -81.581186 }, // Mickey & Minnie meet (Town Sq, near hub)
+    { itemId: 'mk-20', lat: 28.416925, lng: -81.580811 }, // Princess Fairytale Hall meet
+    { itemId: 'mk-21', lat: 28.416925, lng: -81.580811 }, // Princess Fairytale Hall meet
+    { itemId: 'mk-22', lat: 28.418433, lng: -81.583483 }, // Dole Whip at Aloha Isle (near Aladdin/Adventureland)
   ],
   ep: [
     { itemId: 'ep-05', lat: 28.373703, lng: -81.552439 }, // Soarin'
     { itemId: 'ep-06', lat: 28.373919, lng: -81.547253 }, // Mission: SPACE
     { itemId: 'ep-08', lat: 28.373942, lng: -81.551283 }, // Living with the Land
+    { itemId: 'ep-07', lat: 28.3727,   lng: -81.551197 }, // Journey Into Imagination
     { itemId: 'ep-10', lat: 28.371414, lng: -81.547586 }, // Mexico pavilion
     { itemId: 'ep-12', lat: 28.369067, lng: -81.552725 }, // France pavilion
     { itemId: 'ep-13', lat: 28.370228, lng: -81.551969 }, // UK pavilion
     { itemId: 'ep-14', lat: 28.371336, lng: -81.551375 }, // Canada pavilion
+    { itemId: 'ep-11', lat: 28.368044, lng: -81.550511 }, // Japan pavilion
+    { itemId: 'ep-17', lat: 28.369067, lng: -81.552725 }, // Crepes at Les Halles (France)
+    { itemId: 'ep-19', lat: 28.370228, lng: -81.551969 }, // Rose & Crown (UK)
+    { itemId: 'ep-20', lat: 28.371414, lng: -81.547586 }, // La Cava del Tequila (Mexico)
   ],
   hs: [
     { itemId: 'hs-04', lat: 28.359808, lng: -81.559978 }, // Tower of Terror
     { itemId: 'hs-06', lat: 28.356181, lng: -81.561028 }, // Toy Story Mania
     { itemId: 'hs-09', lat: 28.357164, lng: -81.559322 }, // Indiana Jones (Echo Lake)
+    { itemId: 'hs-08', lat: 28.357794, lng: -81.560961 }, // Mickey & Minnie's Runaway Railway (Animation Bldg)
+    { itemId: 'hs-12', lat: 28.357508, lng: -81.560739 }, // Frozen Sing-Along (Little Mermaid theater, Echo Lake)
+    { itemId: 'hs-19', lat: 28.355825, lng: -81.559517 }, // Sci-Fi Dine-In
   ],
   ak: [
     { itemId: 'ak-02', lat: 28.363108, lng: -81.593531 }, // Kilimanjaro Safaris
@@ -56,6 +69,10 @@ const MAP_MARKERS = {
     { itemId: 'ak-05', lat: 28.359397, lng: -81.588317 }, // Kali River Rapids
     { itemId: 'ak-06', lat: 28.355528, lng: -81.588469 }, // DINOSAUR
     { itemId: 'ak-13', lat: 28.357311, lng: -81.589589 }, // Flame Tree Barbecue
+    { itemId: 'ak-07', lat: 28.356389, lng: -81.588058 }, // TriceraTop Spin
+    { itemId: 'ak-09', lat: 28.357417, lng: -81.587558 }, // Finding Nemo show
+    { itemId: 'ak-11', lat: 28.359572, lng: -81.588622 }, // Maharajah Jungle Trek
+    { itemId: 'ak-16', lat: 28.358794, lng: -81.592122 }, // Tusker House
   ],
   // Disneyland & DCA: approximate placements (no crowd-sourced per-ride
   // GPS list was available), positioned within their known general lands.
@@ -65,6 +82,11 @@ const MAP_MARKERS = {
     { itemId: 'dl-05', lat: 33.8112, lng: -117.9183, approx: true }, // Pirates (New Orleans Sq)
     { itemId: 'dl-06', lat: 33.8133, lng: -117.9217, approx: true }, // Matterhorn (Fantasyland)
     { itemId: 'dl-03', lat: 33.8157, lng: -117.9228, approx: true }, // Rise of the Resistance (Galaxy's Edge)
+    { itemId: 'dl-02', lat: 33.8133, lng: -117.9210, approx: true }, // It's a Small World (Fantasyland)
+    { itemId: 'dl-08', lat: 33.8135, lng: -117.9185, approx: true }, // Space Mountain (Tomorrowland)
+    { itemId: 'dl-09', lat: 33.8122, lng: -117.9220, approx: true }, // Big Thunder (Frontierland)
+    { itemId: 'dl-11', lat: 33.8113, lng: -117.9213, approx: true }, // Jungle Cruise (Adventureland)
+    { itemId: 'dl-12', lat: 33.8157, lng: -117.9228, approx: true }, // Smugglers Run (Galaxy's Edge)
   ],
   dca: [
     { itemId: 'dca-01', lat: 33.8045, lng: -117.9226, approx: true }, // Radiator Springs Racers (Cars Land)
@@ -72,6 +94,11 @@ const MAP_MARKERS = {
     { itemId: 'dca-04', lat: 33.8059, lng: -117.9183, approx: true }, // Incredicoaster (Pixar Pier)
     { itemId: 'dca-06', lat: 33.8073, lng: -117.9209, approx: true }, // Soarin' (Grizzly Peak)
     { itemId: 'dca-05', lat: 33.8055, lng: -117.9188, approx: true }, // World of Color (Paradise Bay)
+    { itemId: 'dca-03', lat: 33.8081, lng: -117.9213, approx: true }, // Web Slingers (Avengers Campus)
+    { itemId: 'dca-07', lat: 33.8073, lng: -117.9209, approx: true }, // Grizzly River Run (Grizzly Peak)
+    { itemId: 'dca-10', lat: 33.8059, lng: -117.9183, approx: true }, // Toy Story Mania (Pixar Pier)
+    { itemId: 'dca-11', lat: 33.8068, lng: -117.9183, approx: true }, // Monsters Inc (Hollywood Land)
+    { itemId: 'dca-16', lat: 33.8085, lng: -117.9190, approx: true }, // Carthay Circle (Buena Vista St)
   ],
 };
 
