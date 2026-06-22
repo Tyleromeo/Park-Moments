@@ -18,18 +18,29 @@ const MENU_DATA = {
     tier: '$',
     items: [
       { name: 'Pineapple Dole Whip Cup' },
+      { name: 'Vanilla Dole Whip Cup' },
+      { name: 'Pineapple-Vanilla Swirl Cup' },
       { name: 'Dole Whip Float (with pineapple juice)' },
-      { name: 'Tropical Serenade Float' },
-      { name: 'Coconut Cup (coconut or coconut-pineapple swirl)' },
+      { name: 'Tropical Serenade Float (pineapple-orange-guava juice, coconut soft-serve, cake pop)' },
+      { name: 'Coconut Cup' },
+      { name: 'Coconut-Pineapple Swirl Cup' },
       { name: 'Pineapple Upside-Down Cake with Dole Whip' },
+      { name: 'Pineapple Juice (no soft-serve)' },
     ]
   },
   'mk-23': {
     tier: '$$$',
     items: [
-      { name: 'Breakfast entrées (table-service)' },
-      { name: 'Lunch entrées (table-service)' },
-      { name: 'The Grey Stuff (dessert)' },
+      { name: 'Braised Pork Shank (lunch/dinner)' },
+      { name: 'Pan-Seared Salmon (lunch/dinner)' },
+      { name: 'Ratatouille Vegetable Tart (lunch/dinner)' },
+      { name: 'French Onion Soup' },
+      { name: 'Roasted Chicken (lunch/dinner)' },
+      { name: 'Lobster & Shrimp Pasta Carbonara' },
+      { name: 'Filet Mignon (dinner)' },
+      { name: 'The Grey Stuff (signature dessert)' },
+      { name: 'Master\'s Cupcake' },
+      { name: 'Croque Monsieur (breakfast)' },
     ]
   },
   'mk-24': {
@@ -41,18 +52,29 @@ const MENU_DATA = {
   'mk-25': {
     tier: '$$',
     items: [
-      { name: 'All-Beef Hot Dog' },
+      { name: 'Classic All-Beef Hot Dog' },
+      { name: 'Chipotle BBQ All-Beef Hot Dog (pulled pork, slaw, chipotle BBQ sauce)' },
       { name: 'Chipotle BBQ Foot-Long Hot Dog' },
+      { name: 'Chili-Cheese Hot Dog' },
+      { name: 'Bacon Mac & Cheese Hot Dog' },
+      { name: 'Plant-Based Hot Dog' },
       { name: 'Corn Dog Nuggets' },
-      { name: 'Assorted Fountain Beverage' },
-      { name: 'Pressed Penny Silk Pie' },
+      { name: 'Loaded Fries' },
+      { name: 'Pressed Penny Silk Pie (chocolate tart)' },
+      { name: 'Assorted Fountain Beverages' },
     ]
   },
   'mk-26': {
     tier: '$$',
     items: [
-      { name: 'Sweet or savory waffle (seasonal flavors rotate)' },
-      { name: 'Funnel cake (seasonal toppings)' },
+      { name: 'Classic Belgian Waffle (sweet toppings rotate seasonally)' },
+      { name: 'Savory Waffle (seasonal, often chicken or pulled pork)' },
+      { name: 'Funnel Cake' },
+      { name: 'Seasonal Pumpkin Funnel Cake Sundae (fall)' },
+      { name: 'Nutella Waffle (when available)' },
+      { name: 'Soft-Serve Sundae' },
+      { name: 'Specialty Lemonade' },
+      { name: 'Hot or Iced Coffee' },
     ]
   },
 };

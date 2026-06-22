@@ -12,6 +12,7 @@ const BADGE_CONFIG = {
 let currentView = 'resorts';
 let activeResortId = Storage.getActiveResort();
 let activeParkId = Storage.getActivePark();
+let activeCategory = 'rides'; // 'rides' | 'show' | 'food' — which tab is showing within a park
 
 // If we have a remembered park, jump straight back into it; otherwise
 // land on the resort picker first.
@@ -231,6 +232,14 @@ function renderItemRow(item, checks, opts = {}) {
   `;
 }
 
+// Maps an item's specific badge to one of the three top-level tabs
+function categoryForBadge(badge) {
+  if (badge === 'thrill' || badge === 'family') return 'rides';
+  if (badge === 'show' || badge === 'character') return 'show';
+  if (badge === 'food') return 'food';
+  return 'rides';
+}
+
 // ── Render main content ──────────────────────────────────────────────────────
 function renderPark() {
   const park = PARKS.find(p => p.id === activeParkId);
@@ -285,13 +294,41 @@ function renderPark() {
     </div>
   `;
 
+  // Category tabs — Rides / Shows / Food
+  const categoryCounts = { rides: 0, show: 0, food: 0 };
+  park.sections.forEach(s => s.items.forEach(i => {
+    categoryCounts[categoryForBadge(i.badge)]++;
+  }));
+  const CATEGORY_TABS = [
+    { id: 'rides', label: 'Rides', emoji: '🎢' },
+    { id: 'show', label: 'Shows', emoji: '🎭' },
+    { id: 'food', label: 'Food', emoji: '🍽️' },
+  ];
+  html += `
+    <div class="category-tabs">
+      ${CATEGORY_TABS.map(cat => `
+        <button
+          class="category-tab${activeCategory === cat.id ? ' active' : ''}"
+          data-category="${cat.id}"
+          style="${activeCategory === cat.id ? `--cat-accent: ${park.accentColor}; --cat-accent-light: ${park.accentLight};` : ''}"
+        >
+          <span class="cat-tab-emoji">${cat.emoji}</span>
+          <span class="cat-tab-label">${cat.label}</span>
+          <span class="cat-tab-count">${categoryCounts[cat.id]}</span>
+        </button>
+      `).join('')}
+    </div>
+  `;
+
   // Must-Dos section — gathers every starred item across all sections in
-  // this park, in starred order. Items here are removed from their normal
-  // category below so nothing is duplicated.
+  // this park IN THE CURRENT CATEGORY, in starred order. Items here are
+  // removed from their normal category below so nothing is duplicated.
   const allStarredItems = [];
   park.sections.forEach(section => {
     section.items.forEach(item => {
-      if (Storage.isStarred(item.id)) allStarredItems.push(item);
+      if (Storage.isStarred(item.id) && categoryForBadge(item.badge) === activeCategory) {
+        allStarredItems.push(item);
+      }
     });
   });
 
@@ -303,9 +340,12 @@ function renderPark() {
     html += `</div>`;
   }
 
-  // Sections — starred items are excluded here since they live in Must-Dos above
+  // Sections — starred items excluded (shown in Must-Dos above), and only
+  // items matching the active category tab are shown
   park.sections.forEach(section => {
-    const remainingItems = section.items.filter(item => !Storage.isStarred(item.id));
+    const remainingItems = section.items.filter(item =>
+      !Storage.isStarred(item.id) && categoryForBadge(item.badge) === activeCategory
+    );
     if (remainingItems.length === 0) return;
 
     html += `<div class="section"><h2 class="section-heading">${section.name}</h2>`;
@@ -330,6 +370,15 @@ function renderPark() {
   `;
 
   main.innerHTML = html;
+
+  // Bind category tabs
+  main.querySelectorAll('.category-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeCategory = btn.dataset.category;
+      renderPark();
+      window.scrollTo(0, 0);
+    });
+  });
 
   // Bind showtime override inputs
   main.querySelectorAll('.showtime-input').forEach(input => {
