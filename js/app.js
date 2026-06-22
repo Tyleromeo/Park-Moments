@@ -219,7 +219,10 @@ function renderPark() {
   let html = `
     <div class="park-hero" style="--accent: ${park.accentColor}; --accent-light: ${park.accentLight};">
       <div class="park-hero-inner">
-        <div class="park-meta">${park.resort}</div>
+        <div class="park-meta-row">
+          <div class="park-meta">${park.resort}</div>
+          <button class="map-btn" id="open-map-btn" style="color: ${park.accentColor}; border-color: ${park.accentColor};">🗺️ Map</button>
+        </div>
         <h1 class="park-name">${park.emoji} ${park.name}</h1>
         <div class="park-progress-wrap">
           <div class="park-progress-bar">
@@ -339,6 +342,9 @@ function renderPark() {
   });
 
   renderBottomBar(park, done, total, pct);
+
+  const mapBtn = document.getElementById('open-map-btn');
+  if (mapBtn) mapBtn.addEventListener('click', () => openParkMap(park));
 }
 
 // ── Bottom bar ───────────────────────────────────────────────────────────────
@@ -489,6 +495,100 @@ function resetPark(park) {
 function bindTripButton() {
   const btn = document.getElementById('trip-btn');
   if (btn) btn.addEventListener('click', openTripsModal);
+}
+
+// ── Park map ─────────────────────────────────────────────────────────────────
+let activeLeafletMap = null;
+
+function openParkMap(park) {
+  const center = PARK_MAP_CENTERS[park.id];
+  if (!center) {
+    showToast('Map data isn\'t available for this park yet.', { wrap: true, duration: 2800 });
+    return;
+  }
+
+  const overlay = document.createElement('div');
+  overlay.className = 'map-overlay';
+  overlay.innerHTML = `
+    <div class="map-modal">
+      <div class="map-modal-header">
+        <div class="map-modal-title">${park.emoji} ${park.name}</div>
+        <button class="map-modal-close" aria-label="Close map">✕</button>
+      </div>
+      <div id="leaflet-map" class="leaflet-container"></div>
+      <div class="map-legend">
+        <span class="map-legend-item"><span class="map-dot map-dot-ride"></span> Rides &amp; attractions</span>
+        <span class="map-legend-item"><span class="map-dot map-dot-land"></span> Lands &amp; areas</span>
+      </div>
+      ${MAP_MARKERS[park.id]?.some(m => m.approx) ? `
+        <div class="map-approx-note">📍 Pin locations for this park are approximate — based on the park's general layout, not exact GPS data.</div>
+      ` : ''}
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
+
+  const close = () => {
+    if (activeLeafletMap) {
+      activeLeafletMap.remove();
+      activeLeafletMap = null;
+    }
+    overlay.remove();
+    document.body.style.overflow = '';
+  };
+
+  overlay.querySelector('.map-modal-close').addEventListener('click', close);
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) close();
+  });
+
+  // Initialize Leaflet after the container is in the DOM
+  requestAnimationFrame(() => {
+    const map = L.map('leaflet-map', {
+      center: [center.lat, center.lng],
+      zoom: center.zoom,
+      zoomControl: true,
+    });
+    activeLeafletMap = map;
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19,
+    }).addTo(map);
+
+    // Land/area markers — larger, muted circles with labels
+    (MAP_LANDS[park.id] || []).forEach(land => {
+      L.circleMarker([land.lat, land.lng], {
+        radius: 7,
+        color: park.accentColor,
+        weight: 2,
+        fillColor: park.accentLight,
+        fillOpacity: 0.6,
+      }).addTo(map).bindTooltip(land.name, { permanent: false, direction: 'top' });
+    });
+
+    // Ride/attraction markers — resolve item names from PARKS data
+    const allItems = park.sections.flatMap(s => s.items);
+    (MAP_MARKERS[park.id] || []).forEach(marker => {
+      const item = allItems.find(i => i.id === marker.itemId);
+      if (!item) return;
+      const isChecked = !!Storage.getChecked()[item.id];
+      L.circleMarker([marker.lat, marker.lng], {
+        radius: 8,
+        color: '#fff',
+        weight: 2,
+        fillColor: isChecked ? '#9e9b96' : park.accentColor,
+        fillOpacity: 0.95,
+      }).addTo(map).bindPopup(`
+        <strong>${item.name}</strong><br/>
+        <span style="color:#888;font-size:12px;">${item.meta}</span>
+        ${marker.approx ? '<br/><span style="color:#b8761f;font-size:11px;">approximate location</span>' : ''}
+      `);
+    });
+
+    setTimeout(() => map.invalidateSize(), 100);
+  });
 }
 
 function openTripsModal() {
