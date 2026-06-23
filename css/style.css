@@ -135,20 +135,44 @@ body {
 .header-btn:hover { background: var(--bg-2); }
 
 /* ── Park nav ── */
-.park-nav {
+.park-nav-wrap {
   position: sticky;
   top: var(--header-h);
   z-index: 90;
   background: var(--bg);
+}
+
+.park-nav-fade {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 36px;
+  background: linear-gradient(to right, transparent, var(--bg) 70%);
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+
+.park-nav {
+  position: static;
+  top: auto;
+  z-index: auto;
+  background: transparent;
   border-bottom: 1px solid var(--border);
   display: flex;
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   padding: 0 12px;
+  padding-right: 24px;
   gap: 2px;
   height: var(--nav-h);
   align-items: center;
+}
+
+.park-nav::after {
+  content: '';
+  flex: 0 0 4px;
 }
 
 .park-nav::-webkit-scrollbar { display: none; }
@@ -169,6 +193,7 @@ body {
   white-space: nowrap;
   transition: background 0.12s, color 0.12s;
   flex-shrink: 0;
+  min-width: max-content;
 }
 
 .park-tab:hover { background: var(--bg-2); color: var(--text-1); }

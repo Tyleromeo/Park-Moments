@@ -123,6 +123,18 @@ function renderNav() {
   nav.querySelectorAll('.park-tab[data-park]').forEach(btn => {
     btn.addEventListener('click', () => switchPark(btn.dataset.park));
   });
+
+  // Show the right-edge fade only when there's more to scroll to —
+  // hides itself once the nav is scrolled all the way to the end.
+  const fadeEl = document.querySelector('.park-nav-fade');
+  function updateNavFade() {
+    if (!fadeEl) return;
+    const canScrollMore = nav.scrollWidth - nav.clientWidth - nav.scrollLeft > 4;
+    fadeEl.style.opacity = canScrollMore ? '1' : '0';
+  }
+  updateNavFade();
+  nav.addEventListener('scroll', updateNavFade);
+  window.addEventListener('resize', updateNavFade);
 }
 
 // ── Render a single item row (used by both Must-Dos and regular sections) ──
