@@ -23,6 +23,10 @@ if (activeResortId && PARKS.some(p => p.id === activeParkId && p.resortId === ac
 // ── Render resort picker screen ─────────────────────────────────────────────
 // ── Progress dashboard — front and center on the resort picker ─────────────
 function renderProgressDashboard() {
+  const activeId = Storage.getActiveTripId();
+  const trips = Storage.listTrips();
+  const activeTrip = trips.find(t => t.id === activeId);
+
   const resortBlocks = RESORTS.map(resort => {
     const parksHere = PARKS.filter(p => p.resortId === resort.id);
     const parkStats = parksHere.map(park => ({ park, stats: Storage.getParkStats(park.id) }));
@@ -60,6 +64,9 @@ function renderProgressDashboard() {
 
   return `
     <div class="progress-dashboard">
+      <button class="progress-dash-trip-label" id="progress-dash-trip-label">
+        Showing progress for <strong>${activeTrip ? activeTrip.name : 'this trip'}</strong> · tap to switch
+      </button>
       ${resortBlocks}
     </div>
   `;
@@ -114,6 +121,9 @@ function renderResortScreen() {
       switchPark(parkId);
     });
   });
+
+  const tripLabelBtn = document.getElementById('progress-dash-trip-label');
+  if (tripLabelBtn) tripLabelBtn.addEventListener('click', () => openTripsModal());
 
   document.getElementById('progress-summary').innerHTML = '';
   document.getElementById('reset-btn').style.display = 'none';
@@ -1662,10 +1672,23 @@ function openAllTimeStatsModal() {
       .map(([cat, count]) => `<div class="tally-chip"><span class="tally-num">${count}</span><span class="tally-label">${CAT_LABELS[cat]}</span></div>`)
       .join('');
 
-    const songRows = Object.entries(bundle.favoriteSongs).map(([itemId, fav]) => {
+    const songSections = Object.entries(bundle.songBreakdown || {}).map(([itemId, songList]) => {
       const item = bundle.allItemsRanked.find(r => r.item.id === itemId)?.item;
       if (!item) return '';
-      return `<div class="alltime-song-row"><strong>${item.name}</strong><span>🎵 ${fav.song} <span class="song-count">(${fav.count}×)</span></span></div>`;
+      const totalPlays = songList.reduce((sum, s) => sum + s.count, 0);
+      const rows = songList.map((s, i) => `
+        <div class="song-breakdown-row${i === 0 ? ' song-breakdown-top' : ''}">
+          <span class="song-breakdown-rank">${i === 0 ? '🏆' : i + 1}</span>
+          <span class="song-breakdown-name">${s.song}</span>
+          <span class="song-breakdown-count">${s.count}×</span>
+        </div>
+      `).join('');
+      return `
+        <div class="song-breakdown-block">
+          <div class="song-breakdown-heading">${item.name} <span class="song-breakdown-total">(${totalPlays} ride${totalPlays !== 1 ? 's' : ''} with a song logged)</span></div>
+          ${rows}
+        </div>
+      `;
     }).join('');
 
     const rankedRows = bundle.allItemsRanked.map((r, i) => `
@@ -1686,9 +1709,9 @@ function openAllTimeStatsModal() {
       ${bundle.mostRidden ? `
         <div class="alltime-highlight">⭐ Most done: <strong>${bundle.mostRidden.item.name}</strong> — ${bundle.mostRidden.totalTimes}×</div>
       ` : ''}
-      ${songRows ? `
-        <div class="alltime-section-heading">Favorite songs</div>
-        ${songRows}
+      ${songSections ? `
+        <div class="alltime-section-heading">Songs heard, all-time</div>
+        ${songSections}
       ` : ''}
       ${rankedRows ? `
         <div class="alltime-section-heading">Everything, ranked</div>

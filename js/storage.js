@@ -458,17 +458,20 @@ const Storage = {
       });
 
       const favoriteSongs = {};
+      const songBreakdown = {}; // itemId -> [{ song, count }, ...] sorted most-heard first
       Object.entries(perItemSongs).forEach(([itemId, songCounts]) => {
-        let best = null;
-        Object.entries(songCounts).forEach(([song, count]) => {
-          if (!best || count > best.count) best = { song, count };
-        });
-        if (best) favoriteSongs[itemId] = best;
+        const ranked = Object.entries(songCounts)
+          .map(([song, count]) => ({ song, count }))
+          .sort((a, b) => b.count - a.count);
+        if (ranked.length > 0) {
+          favoriteSongs[itemId] = ranked[0];
+          songBreakdown[itemId] = ranked;
+        }
       });
 
       const allItemsRanked = Object.values(perItem).sort((a, b) => b.totalTimes - a.totalTimes);
 
-      return { grandTotals, mostRidden, favoriteSongs, allItemsRanked };
+      return { grandTotals, mostRidden, favoriteSongs, songBreakdown, allItemsRanked };
     }
 
     const allTripDataList = Object.values(allTripsData);

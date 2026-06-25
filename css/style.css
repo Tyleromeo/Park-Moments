@@ -1336,6 +1336,27 @@ body {
   margin-bottom: 28px;
 }
 
+.progress-dash-trip-label {
+  align-self: flex-start;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 6px 14px;
+  font-size: 12px;
+  color: var(--text-2);
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: background 0.12s;
+}
+
+.progress-dash-trip-label:hover {
+  background: var(--bg-3);
+}
+
+.progress-dash-trip-label strong {
+  color: var(--text-1);
+}
+
 .progress-dash-resort {
   padding: 16px 18px;
   border-radius: 16px;
@@ -1968,6 +1989,61 @@ body {
   padding: 8px 0;
   font-size: 13px;
   border-bottom: 1px solid var(--border);
+}
+
+.song-breakdown-block {
+  margin-bottom: 14px;
+}
+
+.song-breakdown-heading {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-1);
+  margin-bottom: 6px;
+}
+
+.song-breakdown-total {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-3);
+}
+
+.song-breakdown-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+
+.song-breakdown-top {
+  background: #fbeee2;
+}
+
+@media (prefers-color-scheme: dark) {
+  .song-breakdown-top { background: #2e2008; }
+}
+
+.song-breakdown-rank {
+  width: 20px;
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.song-breakdown-name {
+  flex: 1;
+  color: var(--text-1);
+  min-width: 0;
+}
+
+.song-breakdown-count {
+  font-weight: 700;
+  color: var(--text-1);
+  flex-shrink: 0;
+  font-size: 12px;
 }
 
 .alltime-song-row strong {
