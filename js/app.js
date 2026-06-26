@@ -1999,10 +1999,11 @@ function buildRecapCanvas(summary) {
 
   const parkCardHeights = summary.parkSummaries.map(ps => {
     const lines = ps.timeline.length || 1;
+    const dateHeaderCount = ps.timeline.filter(e => e.isNewDay).length;
     const songLines = (ps.checkedItems || [])
       .filter(item => item.songBreakdown && item.songBreakdown.length > 0)
       .reduce((sum, item) => sum + 1 + item.songBreakdown.length, 0); // +1 for each song section heading
-    return PARK_CARD_BASE_H + lines * LINE_H + (songLines > 0 ? songLines * LINE_H + 16 : 0) + 20;
+    return PARK_CARD_BASE_H + lines * LINE_H + dateHeaderCount * LINE_H + (songLines > 0 ? songLines * LINE_H + 16 : 0) + 20;
   });
   const totalParkH = parkCardHeights.reduce((a, b) => a + b, 0);
   const H = HEADER_H + totalParkH + FOOTER_H + 40;
@@ -2110,10 +2111,19 @@ function buildRecapCanvas(summary) {
     ctx.fillStyle = '#6b6760';
     ctx.fillText(breakdown || 'No activities logged', CARD_PADDING, cardY + 70);
 
-    // Chronological timeline with timestamps — show every entry, no cap
+    // Chronological timeline with timestamps — show every entry, no cap.
+    // A date header is inserted whenever the day changes, so multi-day
+    // trips or park-hopping between parks on the same day stays clear.
     ctx.font = '400 13px "DM Sans", sans-serif';
-    ps.timeline.forEach((entry, idx) => {
-      const lineY = cardY + 100 + idx * LINE_H;
+    let lineY = cardY + 100;
+    ps.timeline.forEach((entry) => {
+      if (entry.isNewDay) {
+        ctx.font = '700 12px "DM Sans", sans-serif';
+        ctx.fillStyle = '#b8761f';
+        ctx.fillText(entry.dateLabel.toUpperCase(), CARD_PADDING + 4, lineY);
+        lineY += LINE_H;
+        ctx.font = '400 13px "DM Sans", sans-serif';
+      }
       ctx.fillStyle = '#9e9b96';
       ctx.fillText(entry.timeLabel, CARD_PADDING + 4, lineY);
       const timeW = ctx.measureText(entry.timeLabel + '  ').width;
@@ -2121,11 +2131,12 @@ function buildRecapCanvas(summary) {
       let nameLabel = entry.name + (entry.isExtra ? ' (again)' : '');
       if (nameLabel.length > 60) nameLabel = nameLabel.slice(0, 57) + '…';
       ctx.fillText(nameLabel, CARD_PADDING + 4 + timeW, lineY);
+      lineY += LINE_H;
     });
 
     // Song breakdowns (e.g. Cosmic Rewind) — listed under the timeline,
     // most-heard song first, for any ride with a song picker this trip.
-    let songY = cardY + 100 + ps.timeline.length * LINE_H + 16;
+    let songY = lineY + 16;
     (ps.checkedItems || []).forEach(item => {
       if (!item.songBreakdown || item.songBreakdown.length === 0) return;
       ctx.font = '600 13px "DM Sans", sans-serif';
@@ -2298,10 +2309,11 @@ function exportRecapPDF() {
     doc.line(margin, y, pageW - margin, y);
     y += 24;
 
+    const spansMultipleDays = ps.timeline.filter(e => e.isNewDay).length > 1;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(30, 28, 24);
-    doc.text('Timeline of the day', margin, y);
+    doc.text(spansMultipleDays ? 'Timeline' : 'Timeline of the day', margin, y);
     y += 20;
 
     doc.setFont('helvetica', 'normal');
@@ -2310,6 +2322,16 @@ function exportRecapPDF() {
       if (y > pageH - margin) {
         doc.addPage();
         y = margin;
+      }
+      if (entry.isNewDay) {
+        if (y > pageH - margin) { doc.addPage(); y = margin; }
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.setTextColor(184, 118, 31);
+        doc.text(entry.dateLabel.toUpperCase(), margin, y);
+        y += 18;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(11);
       }
       const label = entry.isExtra ? `${entry.name} (again)` : entry.name;
       doc.setTextColor(150, 150, 150);

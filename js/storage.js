@@ -604,17 +604,29 @@ const Storage = {
       Object.keys(grandByCategory).forEach(k => { grandByCategory[k] += tally.byCategory[k]; });
 
       // This park's timeline, in chronological order, with names resolved
-      // and clock times formatted for display.
+      // and clock times formatted for display. Each entry also carries a
+      // dateLabel and an isNewDay flag (true only on the first entry of a
+      // given calendar day) so renderers can show a date header just once
+      // per day instead of repeating it on every line — this matters for
+      // multi-day trips or park-hopping where a single park's timeline can
+      // span more than one date.
+      let lastDateKey = null;
       const parkTimeline = timeline
         .filter(e => itemToPark[e.itemId] === park.id)
         .sort((a, b) => a.ts - b.ts)
         .map(e => {
           const item = park.sections.flatMap(s => s.items).find(i => i.id === e.itemId);
+          const d = new Date(e.ts);
+          const dateKey = d.toDateString();
+          const isNewDay = dateKey !== lastDateKey;
+          lastDateKey = dateKey;
           return {
             name: item ? item.name : 'Unknown',
             badge: item ? item.badge : 'family',
             time: e.ts,
-            timeLabel: new Date(e.ts).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+            timeLabel: d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+            dateLabel: d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+            isNewDay,
             isExtra: !!e.isExtra,
           };
         });
