@@ -13,6 +13,7 @@ let currentView = 'resorts';
 let activeResortId = Storage.getActiveResort();
 let activeParkId = Storage.getActivePark();
 let activeCategory = 'rides'; // 'rides' | 'show' | 'food' — which tab is showing within a park
+let resortScreenRefreshTimer = null; // keeps Today's Log feeling live while on the home screen
 
 // If we have a remembered park, jump straight back into it; otherwise
 // land on the resort picker first.
@@ -22,6 +23,44 @@ if (activeResortId && PARKS.some(p => p.id === activeParkId && p.resortId === ac
 
 // ── Render resort picker screen ─────────────────────────────────────────────
 // ── Progress dashboard — front and center on the resort picker ─────────────
+// ── Today's Log — live running list of everything checked off today ───────
+function renderTodaysLog() {
+  const log = Storage.getTodaysLog();
+  if (!log.hasActivityToday) return ''; // nothing logged today — stay out of the way
+
+  const todayLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+  const BADGE_EMOJI = { thrill: '🎢', family: '🎢', show: '🎭', character: '👋', food: '🍽️' };
+
+  const parkBlocks = log.parkGroups.map(group => `
+    <div class="todays-log-park-block">
+      <button class="todays-log-park-header" data-park="${group.park.id}">
+        <span class="todays-log-park-emoji">${group.park.emoji}</span>
+        <span class="todays-log-park-name">${group.park.shortName}</span>
+        <span class="todays-log-park-arrow">→</span>
+      </button>
+      <div class="todays-log-entries">
+        ${group.entries.map(e => `
+          <div class="todays-log-entry">
+            <span class="todays-log-time">${e.timeLabel}</span>
+            <span class="todays-log-badge">${BADGE_EMOJI[e.badge] || '•'}</span>
+            <span class="todays-log-name">${e.name}${e.isExtra ? ' <span class="todays-log-again">(again)</span>' : ''}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  return `
+    <div class="todays-log">
+      <div class="todays-log-header">
+        <span class="todays-log-title">📋 ${log.tripName}</span>
+        <span class="todays-log-date">${todayLabel}</span>
+      </div>
+      ${parkBlocks}
+    </div>
+  `;
+}
+
 function renderProgressDashboard() {
   const activeId = Storage.getActiveTripId();
   const trips = Storage.listTrips();
@@ -73,6 +112,12 @@ function renderProgressDashboard() {
 }
 
 function renderResortScreen() {
+  // Stop any refresh timer from a previous visit to this screen before
+  // starting a fresh one — prevents stacking multiple intervals if this
+  // function gets called again (e.g. switching trips, coming back from
+  // a park) while one is already running.
+  if (resortScreenRefreshTimer) clearInterval(resortScreenRefreshTimer);
+
   const main = document.getElementById('main-content');
   const nav = document.getElementById('park-nav');
   nav.innerHTML = '';
@@ -83,6 +128,7 @@ function renderResortScreen() {
 
   const html = `
     <div class="resort-screen">
+      ${renderTodaysLog()}
       ${renderProgressDashboard()}
       <div class="resort-screen-header">
         <h1 class="resort-screen-title">Where to?</h1>
@@ -122,11 +168,29 @@ function renderResortScreen() {
     });
   });
 
+  main.querySelectorAll('.todays-log-park-header').forEach(header => {
+    header.addEventListener('click', () => {
+      const parkId = header.dataset.park;
+      const park = PARKS.find(p => p.id === parkId);
+      if (!park) return;
+      switchResort(park.resortId);
+      switchPark(parkId);
+    });
+  });
+
   const tripLabelBtn = document.getElementById('progress-dash-trip-label');
   if (tripLabelBtn) tripLabelBtn.addEventListener('click', () => openTripsModal());
 
   document.getElementById('progress-summary').innerHTML = '';
   document.getElementById('reset-btn').style.display = 'none';
+
+  // Keep Today's Log feeling "live" — re-render this screen periodically
+  // so new check-ins (logged just now, or imported from another device)
+  // show up without the person needing to manually refresh. Only runs
+  // while the resort screen is actually the active view.
+  resortScreenRefreshTimer = setInterval(() => {
+    if (currentView === 'resorts') renderResortScreen();
+  }, 60000);
 }
 
 function switchResort(resortId) {
@@ -693,6 +757,10 @@ function renderBottomBar(park, done, total, pct) {
 
 // ── Actions ──────────────────────────────────────────────────────────────────
 function switchPark(id) {
+  if (resortScreenRefreshTimer) {
+    clearInterval(resortScreenRefreshTimer);
+    resortScreenRefreshTimer = null;
+  }
   activeParkId = id;
   Storage.setActivePark(id);
   renderNav();

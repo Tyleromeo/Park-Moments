@@ -550,6 +550,65 @@ const Storage = {
   // Builds everything needed to render a trip recap (image or PDF):
   // overall totals, per-park breakdowns, and a few highlight facts.
   // Operates on the currently active trip.
+  // Returns today's timeline entries only (since local midnight) for the
+  // active trip, grouped by park, most recent first. Used to power the
+  // live "today's log" on the home screen — resets fresh each calendar
+  // day so it always reflects "what have I done today," not the whole
+  // trip's history.
+  getTodaysLog() {
+    const meta = this.getAllTrips()[this.getActiveTripId()];
+    const tripName = meta ? meta.name : 'My Disney Trip';
+    const timeline = this._getTripData().timeline || [];
+
+    const now = new Date();
+    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const todaysEntries = timeline.filter(e => e.ts >= midnight);
+
+    if (todaysEntries.length === 0) {
+      return { tripName, hasActivityToday: false, parkGroups: [] };
+    }
+
+    const itemToPark = {};
+    const itemById = {};
+    PARKS.forEach(park => park.sections.forEach(s => s.items.forEach(item => {
+      itemToPark[item.id] = park.id;
+      itemById[item.id] = item;
+    })));
+
+    // Group today's entries by park, preserving each park's own
+    // chronological order, but show parks most-recently-active first —
+    // if someone hopped from MK to EPCOT today, EPCOT (the one they're
+    // probably still at) shows up on top.
+    const byPark = {};
+    todaysEntries.forEach(e => {
+      const parkId = itemToPark[e.itemId];
+      if (!parkId) return;
+      if (!byPark[parkId]) byPark[parkId] = [];
+      byPark[parkId].push(e);
+    });
+
+    const parkGroups = Object.entries(byPark).map(([parkId, entries]) => {
+      const park = PARKS.find(p => p.id === parkId);
+      const sorted = [...entries].sort((a, b) => a.ts - b.ts);
+      const lastTs = sorted[sorted.length - 1].ts;
+      return {
+        park,
+        lastTs,
+        entries: sorted.map(e => {
+          const item = itemById[e.itemId];
+          return {
+            name: item ? item.name : 'Unknown',
+            badge: item ? item.badge : 'family',
+            timeLabel: new Date(e.ts).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+            isExtra: !!e.isExtra,
+          };
+        }),
+      };
+    }).sort((a, b) => b.lastTs - a.lastTs);
+
+    return { tripName, hasActivityToday: true, parkGroups };
+  },
+
   getTripSummary() {
     const meta = this.getAllTrips()[this.getActiveTripId()];
     const tripName = meta ? meta.name : 'My Disney Trip';

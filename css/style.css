@@ -1329,6 +1329,103 @@ body {
 .bottom-spacer { height: 24px; }
 
 /* ── Resort picker screen ── */
+.todays-log {
+  border-radius: 16px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  margin-bottom: 18px;
+  overflow: hidden;
+}
+
+.todays-log-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 14px 18px 10px;
+}
+
+.todays-log-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--text-1);
+}
+
+.todays-log-date {
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.todays-log-park-block {
+  border-top: 1px solid var(--border);
+}
+
+.todays-log-park-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 18px;
+  border: none;
+  background: var(--bg);
+  cursor: pointer;
+  font-family: var(--font-body);
+  text-align: left;
+  transition: background 0.12s;
+}
+
+.todays-log-park-header:hover {
+  background: var(--bg-3);
+}
+
+.todays-log-park-emoji {
+  font-size: 16px;
+}
+
+.todays-log-park-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-1);
+}
+
+.todays-log-park-arrow {
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.todays-log-entries {
+  padding: 6px 18px 12px;
+}
+
+.todays-log-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 13px;
+}
+
+.todays-log-time {
+  color: var(--text-3);
+  width: 64px;
+  flex-shrink: 0;
+}
+
+.todays-log-badge {
+  flex-shrink: 0;
+}
+
+.todays-log-name {
+  color: var(--text-1);
+  flex: 1;
+  min-width: 0;
+}
+
+.todays-log-again {
+  color: var(--text-3);
+  font-size: 11px;
+}
+
 .progress-dashboard {
   display: flex;
   flex-direction: column;
