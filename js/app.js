@@ -779,12 +779,21 @@ function toggleItem(id) {
   renderPark();
 
   if (newState) {
-    const { done, total } = Storage.getParkStats(activeParkId);
-    if (done === total) showToast(`${park.emoji} All done at ${park.shortName}!`);
-
     // If this item has a song picker, prompt right away
     if (SONG_PICKERS[id]) {
       openSongPicker(id);
+    }
+
+    // Check for any badges newly crossed by this check-in — park tier
+    // thresholds or a freshly-completed collection. Only fires on check
+    // (not uncheck), so undoing a mistake never triggers a celebration.
+    const newBadges = getNewlyEarnedBadges();
+    if (newBadges.length > 0) {
+      markBadgesSeen(newBadges.map(b => b.id));
+      // Stack multiple celebrations if more than one badge was crossed
+      // in a single check (e.g. hitting both Silver and Gold at once
+      // because the park only had a couple of items left).
+      showBadgeCelebration(newBadges, 0);
     }
   }
 }
@@ -1509,6 +1518,218 @@ let allTimeView = 'alltime'; // 'alltime' | 'byyear'
 // ── Collections — list view + detail view ("What am I missing?") ──────────
 let collectionsDetailId = null; // currently-open collection's id, or null for the list
 
+// ── Badge wall — browsable view of every earned (and not-yet-earned) badge ──
+function openBadgesModal() {
+  const earnedPark = getEarnedParkBadges();
+  const earnedCollection = getEarnedCollectionBadges();
+  const earnedIds = new Set([...earnedPark, ...earnedCollection].map(b => b.id));
+
+  // Build the full park badge grid — every park × every tier, marking
+  // which ones are earned vs. still locked, so people can see exactly
+  // what's left to chase.
+  const parkBadgeRows = PARKS.map(park => {
+    const stats = Storage.getParkStats(park.id);
+    const tierCells = PARK_BADGE_TIERS.map(tier => {
+      const id = `park_${park.id}_${tier.id}`;
+      const isEarned = earnedIds.has(id);
+      return `
+        <button class="badge-cell${isEarned ? ' badge-cell-earned' : ''}" data-badge-id="${id}" ${isEarned ? '' : 'disabled'} title="${tier.label} — ${tier.threshold}%">
+          <span class="badge-cell-emoji">${isEarned ? tier.emoji : '🔒'}</span>
+          <span class="badge-cell-label">${tier.label}</span>
+        </button>
+      `;
+    }).join('');
+    return `
+      <div class="badge-park-row">
+        <div class="badge-park-row-header">
+          <span class="badge-park-name">${park.emoji} ${park.shortName}</span>
+          <span class="badge-park-pct">${stats.pct}%</span>
+        </div>
+        <div class="badge-tier-row">${tierCells}</div>
+      </div>
+    `;
+  }).join('');
+
+  // Collection badges — only list collections that actually have items,
+  // showing earned ones distinctly from still-locked ones.
+  const collections = getAllCollections().filter(c => c.itemIds && c.itemIds.length > 0);
+  const collectionBadgeRows = collections.map(col => {
+    const id = `collection_${col.id}`;
+    const isEarned = earnedIds.has(id);
+    const progress = Storage.getCollectionProgress(col.itemIds);
+    return `
+      <button class="badge-collection-row${isEarned ? ' badge-cell-earned' : ''}" data-badge-id="${id}" ${isEarned ? '' : 'disabled'}>
+        <span class="badge-cell-emoji">${isEarned ? col.emoji : '🔒'}</span>
+        <span class="badge-collection-name">${col.name}</span>
+        <span class="badge-collection-pct">${progress.pct}%</span>
+      </button>
+    `;
+  }).join('');
+
+  const totalEarned = earnedPark.length + earnedCollection.length;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>🏆 My Badges</h3>
+        <button class="modal-close" aria-label="Close">✕</button>
+      </div>
+      <p class="modal-subtitle">${totalEarned} badge${totalEarned !== 1 ? 's' : ''} earned so far. Keep checking things off to unlock more.</p>
+      <div class="badge-section-heading">Park completion</div>
+      <div class="badge-park-list">${parkBadgeRows}</div>
+      ${collectionBadgeRows ? `
+        <div class="badge-section-heading">Collections</div>
+        <div class="badge-collection-list">${collectionBadgeRows}</div>
+      ` : ''}
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
+
+  const close = () => {
+    overlay.remove();
+    document.body.style.overflow = '';
+  };
+  overlay.querySelector('.modal-close').addEventListener('click', close);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+  // Tapping an earned badge opens the share flow again — people often
+  // want to revisit and re-share an old badge later.
+  overlay.querySelectorAll('.badge-cell-earned').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const badgeId = btn.dataset.badgeId;
+      const allEarned = [...getEarnedParkBadges(), ...getEarnedCollectionBadges()];
+      const badge = allEarned.find(b => b.id === badgeId);
+      if (badge) shareBadgeImage(badge);
+    });
+  });
+}
+
+// ── Badge celebration — pops when a new badge is earned ────────────────────
+function showBadgeCelebration(badges, index) {
+  if (index >= badges.length) return;
+  const badge = badges[index];
+
+  const overlay = document.createElement('div');
+  overlay.className = 'badge-celebration-overlay';
+
+  const isCollection = badge.type === 'collection';
+  const emoji = isCollection ? badge.collectionEmoji : badge.tierEmoji;
+  const title = isCollection ? 'Collection Complete!' : `${badge.tierLabel} Badge Earned!`;
+  const subtitle = isCollection
+    ? badge.collectionName
+    : `${badge.parkEmoji} ${badge.parkName} — ${badge.pct}% complete`;
+
+  overlay.innerHTML = `
+    <div class="badge-celebration-card">
+      <div class="badge-celebration-emoji">${emoji}</div>
+      <div class="badge-celebration-title">${title}</div>
+      <div class="badge-celebration-subtitle">${subtitle}</div>
+      <div class="badge-celebration-btns">
+        <button class="badge-celebration-share">📤 Share this badge</button>
+        <button class="badge-celebration-dismiss">Keep going</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
+
+  const close = () => {
+    overlay.remove();
+    document.body.style.overflow = '';
+    // Chain to the next badge celebration, if more than one was earned
+    // in this same check-in.
+    showBadgeCelebration(badges, index + 1);
+  };
+
+  overlay.querySelector('.badge-celebration-dismiss').addEventListener('click', close);
+  overlay.querySelector('.badge-celebration-share').addEventListener('click', () => {
+    shareBadgeImage(badge);
+  });
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+}
+
+// Draws a shareable, social-media-friendly square badge card and triggers
+// either the native share sheet (if available) or a direct download.
+async function shareBadgeImage(badge) {
+  const isCollection = badge.type === 'collection';
+  const emoji = isCollection ? badge.collectionEmoji : badge.tierEmoji;
+  const title = isCollection ? 'Collection Complete!' : `${badge.tierLabel} Badge`;
+  const subtitle = isCollection ? badge.collectionName : `${badge.parkName} — ${badge.pct}% Complete`;
+  const accentColor = isCollection ? '#5b38b0' : (badge.tier === 'gold' ? '#c9942b' : badge.tier === 'silver' ? '#8a8f99' : '#a3653a');
+
+  const SIZE = 1080; // square, Instagram/social-friendly
+  const canvas = document.createElement('canvas');
+  canvas.width = SIZE;
+  canvas.height = SIZE;
+  const ctx = canvas.getContext('2d');
+
+  // Background gradient
+  const grad = ctx.createLinearGradient(0, 0, 0, SIZE);
+  grad.addColorStop(0, '#2a2620');
+  grad.addColorStop(1, '#181511');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Decorative accent ring
+  ctx.strokeStyle = accentColor;
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.arc(SIZE / 2, 380, 200, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Big emoji badge
+  ctx.font = '220px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(emoji, SIZE / 2, 390);
+
+  // Title
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '700 64px "DM Sans", sans-serif';
+  ctx.fillText(title, SIZE / 2, 650);
+
+  // Subtitle
+  ctx.fillStyle = accentColor;
+  ctx.font = '600 40px "DM Sans", sans-serif';
+  ctx.fillText(subtitle, SIZE / 2, 720);
+
+  // Branding footer
+  ctx.fillStyle = '#9e9b96';
+  ctx.font = '400 28px "DM Sans", sans-serif';
+  ctx.fillText('🎢 Earned on Rope Drop', SIZE / 2, 950);
+  ctx.font = '400 20px "DM Sans", sans-serif';
+  ctx.fillText('Not affiliated with The Walt Disney Company', SIZE / 2, 990);
+
+  canvas.toBlob(async (blob) => {
+    const fileName = `rope-drop-badge-${isCollection ? badge.collectionId : badge.parkId + '-' + badge.tier}.png`;
+    const file = new File([blob], fileName, { type: 'image/png' });
+
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: 'My Rope Drop Badge' });
+        return;
+      } catch (e) {
+        // User cancelled the share sheet, or it failed — fall through to download
+      }
+    }
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast('Badge image saved 🏆');
+  }, 'image/png');
+}
+
 function openCollectionsModal() {
   collectionsDetailId = null;
   renderCollectionsOverlay();
@@ -1841,6 +2062,7 @@ function openTripsModal() {
       <button class="new-trip-btn">+ Start a new trip</button>
       <button class="alltime-stats-btn">🏆 All-Time Stats</button>
       <button class="collections-btn">📦 Collections</button>
+      <button class="badges-btn">🏆 My Badges</button>
 
       <div class="recap-section">
         <div class="recap-section-heading">Share a recap of your current trip</div>
@@ -1969,6 +2191,11 @@ function openTripsModal() {
   overlay.querySelector('.collections-btn').addEventListener('click', () => {
     close(false);
     openCollectionsModal();
+  });
+
+  overlay.querySelector('.badges-btn').addEventListener('click', () => {
+    close(false);
+    openBadgesModal();
   });
 
   // Export a single trip

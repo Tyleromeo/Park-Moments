@@ -1552,6 +1552,26 @@ body {
   border-color: var(--text-2);
 }
 
+.badges-btn {
+  width: 100%;
+  padding: 13px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-md);
+  background: var(--bg-2);
+  color: var(--text-1);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.badges-btn:hover {
+  background: var(--bg-3);
+  border-color: var(--text-2);
+}
+
 .collection-list {
   display: flex;
   flex-direction: column;
@@ -2964,6 +2984,218 @@ body {
 .reset-btn:focus-visible {
   outline: 2px solid #1a6fd4;
   outline-offset: 2px;
+}
+
+.badge-section-heading {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 18px 0 10px;
+}
+
+.badge-park-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.badge-park-row {
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.badge-park-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.badge-park-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-1);
+}
+
+.badge-park-pct {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+
+.badge-tier-row {
+  display: flex;
+  gap: 8px;
+}
+
+.badge-cell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  cursor: not-allowed;
+  font-family: var(--font-body);
+  opacity: 0.5;
+}
+
+.badge-cell-earned {
+  cursor: pointer;
+  opacity: 1;
+  background: #fbeee2;
+  border-color: #e0a04a;
+}
+
+@media (prefers-color-scheme: dark) {
+  .badge-cell-earned { background: #2e2008; border-color: #c9942b; }
+}
+
+.badge-cell-emoji {
+  font-size: 22px;
+}
+
+.badge-cell-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.badge-collection-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.badge-collection-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  cursor: not-allowed;
+  font-family: var(--font-body);
+  text-align: left;
+  opacity: 0.5;
+}
+
+.badge-collection-row.badge-cell-earned {
+  cursor: pointer;
+  opacity: 1;
+}
+
+.badge-collection-row .badge-cell-emoji {
+  font-size: 20px;
+}
+
+.badge-collection-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.badge-collection-pct {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-2);
+}
+
+/* ── Badge celebration overlay ── */
+.badge-celebration-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  padding: 24px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.badge-celebration-card {
+  background: var(--bg);
+  border-radius: 24px;
+  padding: 40px 32px;
+  text-align: center;
+  max-width: 360px;
+  width: 100%;
+  animation: badgePopIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes badgePopIn {
+  from { transform: scale(0.7); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.badge-celebration-emoji {
+  font-size: 80px;
+  margin-bottom: 16px;
+  line-height: 1;
+}
+
+.badge-celebration-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  color: var(--text-1);
+  margin-bottom: 8px;
+}
+
+.badge-celebration-subtitle {
+  font-size: 15px;
+  color: var(--text-2);
+  margin-bottom: 28px;
+}
+
+.badge-celebration-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.badge-celebration-share {
+  width: 100%;
+  padding: 14px;
+  border-radius: var(--radius-pill);
+  border: none;
+  background: #e0a04a;
+  color: #2a1d08;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+.badge-celebration-share:hover {
+  background: #d4923a;
+}
+
+.badge-celebration-dismiss {
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--radius-pill);
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+.badge-celebration-dismiss:hover {
+  color: var(--text-1);
 }
 
 @media (prefers-reduced-motion: reduce) {
