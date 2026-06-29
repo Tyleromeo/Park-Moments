@@ -444,7 +444,7 @@ function renderPark() {
           <div class="park-meta">${park.resort}</div>
           <div class="park-meta-btns">
             <button class="map-btn" id="open-waits-btn" style="color: ${park.accentColor}; border-color: ${park.accentColor};">🕐 Live Waits</button>
-            <button class="map-btn" id="open-map-btn" style="color: ${park.accentColor}; border-color: ${park.accentColor};">🗺️ Map</button>
+            <button class="map-btn" id="open-map-btn" style="color: ${park.accentColor}; border-color: ${park.accentColor};">🗺️ My Must-Do Map</button>
           </div>
         </div>
         <h1 class="park-name">${park.emoji} ${park.name}</h1>
