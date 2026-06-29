@@ -1305,6 +1305,106 @@ function renderWeatherWidget(park) {
 // ── Park map ─────────────────────────────────────────────────────────────────
 let activeLeafletMap = null;
 
+const MAP_LAND_ALIASES = {
+  mk: {
+    'main street usa': 'Main Street, U.S.A.',
+    'storybook circus': { name: 'Storybook Circus', lat: 28.42065, lng: -81.5792 },
+  },
+  hs: {
+    'sunset blvd': 'Sunset Boulevard',
+  },
+  ep: {
+    'world showcase france': { name: 'France pavilion', lat: 28.369067, lng: -81.552725 },
+    'world showcase norway': { name: 'Norway pavilion', lat: 28.370517, lng: -81.5471 },
+    'world showcase mexico': { name: 'Mexico pavilion', lat: 28.371414, lng: -81.547586 },
+  },
+  ak: {
+    'africa harambe station': 'Africa',
+    'conservation station': { name: 'Conservation Station', lat: 28.3652, lng: -81.5902 },
+    'park entrance': { name: 'Park entrance', lat: 28.3549, lng: -81.5905 },
+    'park wide': 'Discovery Island',
+  },
+  dl: {
+    'main street usa': 'Main Street, U.S.A.',
+    'bayou country': { name: 'Bayou Country', lat: 33.8108, lng: -117.9165 },
+    'mickeys toontown': { name: "Mickey's Toontown", lat: 33.8152, lng: -117.9186 },
+  },
+};
+
+function normalizeMapLabel(value) {
+  return (value || '')
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/\([^)]*\)/g, '')
+    .replace(/['’‘]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\bu s a\b/g, 'usa')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function firstMetaLocation(item) {
+  return (item.meta || '').split('·')[0].trim();
+}
+
+function resolveMapLocation(parkId, item) {
+  const rawLocation = firstMetaLocation(item);
+  if (!rawLocation) return null;
+
+  const normalized = normalizeMapLabel(rawLocation);
+  const lands = MAP_LANDS[parkId] || [];
+  const aliases = MAP_LAND_ALIASES[parkId] || {};
+  const alias = aliases[normalized];
+
+  if (alias && typeof alias === 'object') {
+    return alias;
+  }
+
+  const targetName = typeof alias === 'string' ? alias : rawLocation;
+  const targetNormalized = normalizeMapLabel(targetName);
+
+  return lands.find(land => normalizeMapLabel(land.name) === targetNormalized)
+    || lands.find(land => {
+      const landName = normalizeMapLabel(land.name);
+      return landName.includes(targetNormalized) || targetNormalized.includes(landName);
+    })
+    || null;
+}
+
+function getStarredMapData(park, stars) {
+  const allItems = park.sections.flatMap(s => s.items);
+  const exactMarkers = new Map((MAP_MARKERS[park.id] || []).map(marker => [marker.itemId, marker]));
+  const starredMarkers = [];
+  const starredWithoutPins = [];
+
+  Object.keys(stars).forEach(id => {
+    const item = allItems.find(i => i.id === id);
+    if (!item) return; // belongs to a different park
+
+    const exactMarker = exactMarkers.get(id);
+    if (exactMarker) {
+      starredMarkers.push(exactMarker);
+      return;
+    }
+
+    const fallbackLocation = resolveMapLocation(park.id, item);
+    if (fallbackLocation) {
+      starredMarkers.push({
+        itemId: id,
+        lat: fallbackLocation.lat,
+        lng: fallbackLocation.lng,
+        approx: true,
+        approxLabel: fallbackLocation.name || firstMetaLocation(item),
+      });
+      return;
+    }
+
+    starredWithoutPins.push(item);
+  });
+
+  return { allItems, starredMarkers, starredWithoutPins };
+}
+
 // ── Live Waits modal — sortable list of real-time ride wait times ──────────
 let liveWaitsSortMode = 'wait-desc'; // 'wait-desc' | 'wait-asc' | 'alpha'
 
@@ -1412,16 +1512,7 @@ function openParkMap(park) {
   }
 
   const stars = Storage.getStars();
-  const allItems = park.sections.flatMap(s => s.items);
-  const allMarkersHere = MAP_MARKERS[park.id] || [];
-  // Only show pins for rides currently starred as a must-do
-  const starredMarkers = allMarkersHere.filter(m => stars[m.itemId]);
-  // Starred items that don't have a pin available, so we can be upfront about it
-  const starredWithoutPins = Object.keys(stars).filter(id => {
-    const item = allItems.find(i => i.id === id);
-    if (!item) return false; // belongs to a different park
-    return !allMarkersHere.some(m => m.itemId === id);
-  });
+  const { allItems, starredMarkers, starredWithoutPins } = getStarredMapData(park, stars);
 
   const overlay = document.createElement('div');
   overlay.className = 'map-overlay';
@@ -1504,7 +1595,7 @@ function openParkMap(park) {
       }).addTo(map).bindPopup(`
         <strong>⭐ ${item.name}</strong><br/>
         <span style="color:#888;font-size:12px;">${item.meta}</span>
-        ${marker.approx ? '<br/><span style="color:#b8761f;font-size:11px;">approximate location</span>' : ''}
+        ${marker.approx ? `<br/><span style="color:#b8761f;font-size:11px;">approximate location${marker.approxLabel ? `: ${marker.approxLabel}` : ''}</span>` : ''}
       `);
     });
 
