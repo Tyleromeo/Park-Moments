@@ -15,6 +15,387 @@ let activeParkId = Storage.getActivePark();
 let activeCategory = 'rides'; // 'rides' | 'show' | 'food' — which tab is showing within a park
 let resortScreenRefreshTimer = null; // keeps Today's Log feeling live while on the home screen
 
+// ── Local photo memories beta (IndexedDB, local-only) ───────────────────────
+// Photos are stored on this browser/device only. They are not uploaded to Vercel
+// or Supabase. This beta caps the app at 20 compressed photos total.
+const PHOTO_LIMITS = {
+  maxLocalPhotos: 20,
+  fullImageMaxLongEdge: 1920,
+  thumbnailMaxLongEdge: 384,
+  jpegQuality: 0.82,
+};
+
+const PhotoStore = {
+  dbName: 'ropeDropPhotoMemories',
+  storeName: 'photos',
+  dbPromise: null,
+
+  open() {
+    if (this.dbPromise) return this.dbPromise;
+    this.dbPromise = new Promise((resolve, reject) => {
+      const req = indexedDB.open(this.dbName, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        const store = db.createObjectStore(this.storeName, { keyPath: 'id' });
+        store.createIndex('tripId', 'tripId', { unique: false });
+        store.createIndex('timelineEntryId', 'timelineEntryId', { unique: false });
+        store.createIndex('itemId', 'itemId', { unique: false });
+        store.createIndex('photoType', 'photoType', { unique: false });
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    return this.dbPromise;
+  },
+
+  async tx(mode = 'readonly') {
+    const db = await this.open();
+    return db.transaction(this.storeName, mode).objectStore(this.storeName);
+  },
+
+  async getAll() {
+    const store = await this.tx('readonly');
+    return new Promise((resolve, reject) => {
+      const req = store.getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = () => reject(req.error);
+    });
+  },
+
+  async put(photo) {
+    const store = await this.tx('readwrite');
+    return new Promise((resolve, reject) => {
+      const req = store.put(photo);
+      req.onsuccess = () => resolve(photo);
+      req.onerror = () => reject(req.error);
+    });
+  },
+
+  async delete(id) {
+    const store = await this.tx('readwrite');
+    return new Promise((resolve, reject) => {
+      const req = store.delete(id);
+      req.onsuccess = () => resolve(true);
+      req.onerror = () => reject(req.error);
+    });
+  },
+
+  async listForTrip(tripId = Storage.getActiveTripId()) {
+    const all = await this.getAll();
+    return all.filter(p => p.tripId === tripId).sort((a, b) => a.createdAt - b.createdAt);
+  },
+
+  async listForTimelineEntry(timelineEntryId) {
+    const all = await this.getAll();
+    return all.filter(p => p.timelineEntryId === timelineEntryId && p.photoType !== 'tripCover').sort((a, b) => a.createdAt - b.createdAt);
+  },
+
+  async listForItem(itemId, tripId = Storage.getActiveTripId()) {
+    const all = await this.getAll();
+    return all.filter(p => p.tripId === tripId && p.itemId === itemId && p.photoType !== 'tripCover').sort((a, b) => a.createdAt - b.createdAt);
+  },
+
+  async getTripCover(tripId = Storage.getActiveTripId()) {
+    const all = await this.getAll();
+    return all.filter(p => p.tripId === tripId && p.photoType === 'tripCover').sort((a, b) => b.createdAt - a.createdAt)[0] || null;
+  },
+
+  async addPhoto(file, context = {}) {
+    const all = await this.getAll();
+    if (all.length >= PHOTO_LIMITS.maxLocalPhotos) {
+      throw new Error(`You’ve added ${PHOTO_LIMITS.maxLocalPhotos} test photos. Remove one to add another.`);
+    }
+
+    const tripId = context.tripId || Storage.getActiveTripId();
+    if (context.photoType === 'tripCover') {
+      const oldCover = await this.getTripCover(tripId);
+      if (oldCover) await this.delete(oldCover.id);
+    }
+
+    const imageBlob = await compressImage(file, PHOTO_LIMITS.fullImageMaxLongEdge, PHOTO_LIMITS.jpegQuality);
+    const thumbBlob = await compressImage(file, PHOTO_LIMITS.thumbnailMaxLongEdge, 0.78);
+    const photo = {
+      id: `photo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      tripId,
+      timelineEntryId: context.timelineEntryId || null,
+      itemId: context.itemId || null,
+      photoType: context.photoType || 'memory',
+      imageBlob,
+      thumbBlob,
+      createdAt: Date.now(),
+    };
+    return this.put(photo);
+  },
+};
+
+function compressImage(file, maxLongEdge, quality) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const scale = Math.min(1, maxLongEdge / Math.max(img.naturalWidth, img.naturalHeight));
+      const width = Math.max(1, Math.round(img.naturalWidth * scale));
+      const height = Math.max(1, Math.round(img.naturalHeight * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(blob => {
+        URL.revokeObjectURL(url);
+        if (blob) resolve(blob);
+        else reject(new Error('Could not compress that image.'));
+      }, 'image/jpeg', quality);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Could not read that image.'));
+    };
+    img.src = url;
+  });
+}
+
+function pickImageFile() {
+  return new Promise(resolve => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.style.display = 'none';
+    document.body.appendChild(input);
+    input.addEventListener('change', () => {
+      const file = input.files && input.files[0] ? input.files[0] : null;
+      input.remove();
+      resolve(file);
+    }, { once: true });
+    input.click();
+  });
+}
+
+function getLatestTimelineEntryForItem(itemId) {
+  const timeline = Storage.ensureTimelineEntryIds ? Storage.ensureTimelineEntryIds() : [];
+  return [...timeline].reverse().find(e => e.itemId === itemId) || null;
+}
+
+async function addPhotoToTimelineEntry(timelineEntryId, itemId) {
+  try {
+    const file = await pickImageFile();
+    if (!file) return;
+    await PhotoStore.addPhoto(file, { timelineEntryId, itemId });
+    showToast('Photo added 📷');
+    refreshPhotoUI(document);
+    if (currentView === 'resorts') renderResortScreen();
+  } catch (err) {
+    showToast(err.message || 'Could not add that photo.', { wrap: true, duration: 3400 });
+  }
+}
+
+async function addPhotoToItem(itemId) {
+  const entry = getLatestTimelineEntryForItem(itemId);
+  if (!entry) {
+    showToast('Check this off first, then add a photo.', { wrap: true, duration: 2800 });
+    return;
+  }
+  await addPhotoToTimelineEntry(entry.id, itemId);
+}
+
+async function setTripCoverPhoto() {
+  try {
+    const file = await pickImageFile();
+    if (!file) return;
+    await PhotoStore.addPhoto(file, { photoType: 'tripCover' });
+    showToast('Trip cover photo saved 📷');
+    document.querySelector('.modal-overlay')?.remove();
+    document.body.style.overflow = '';
+    openTripsModal();
+  } catch (err) {
+    showToast(err.message || 'Could not save that cover photo.', { wrap: true, duration: 3400 });
+  }
+}
+
+async function refreshPhotoUI(root = document) {
+  const all = await PhotoStore.getAll();
+  const activeTripId = Storage.getActiveTripId();
+  const used = all.length;
+
+  root.querySelectorAll('[data-photo-count]').forEach(el => {
+    el.textContent = `${used} / ${PHOTO_LIMITS.maxLocalPhotos}`;
+  });
+
+  root.querySelectorAll('.photo-log-btn').forEach(btn => {
+    const count = all.filter(p => p.timelineEntryId === btn.dataset.timelineId).length;
+    btn.textContent = count ? `📷 ${count}` : '📷 Add';
+    btn.classList.toggle('photo-has-count', count > 0);
+  });
+
+  root.querySelectorAll('.photo-item-btn').forEach(btn => {
+    const count = all.filter(p => p.tripId === activeTripId && p.itemId === btn.dataset.itemId && p.photoType !== 'tripCover').length;
+    btn.textContent = count ? `📷 ${count}` : '📷';
+    btn.title = count ? `${count} photo${count === 1 ? '' : 's'}` : 'Add photo';
+    btn.classList.toggle('photo-has-count', count > 0);
+  });
+
+  root.querySelectorAll('.photo-thumb-strip[data-timeline-id]').forEach(async strip => {
+    const photos = all.filter(p => p.timelineEntryId === strip.dataset.timelineId).slice(0, 4);
+    strip.innerHTML = photos.map(p => `<button class="photo-thumb-btn" data-photo-id="${p.id}" aria-label="View photo"><img alt="" src="${URL.createObjectURL(p.thumbBlob)}"></button>`).join('');
+    strip.querySelectorAll('.photo-thumb-btn').forEach(btn => {
+      btn.addEventListener('click', () => openPhotoMemoryModal({ timelineEntryId: strip.dataset.timelineId }));
+    });
+  });
+
+  const coverEls = root.querySelectorAll('.trip-cover-preview');
+  for (const el of coverEls) {
+    const cover = all.filter(p => p.tripId === (el.dataset.tripId || activeTripId) && p.photoType === 'tripCover').sort((a, b) => b.createdAt - a.createdAt)[0];
+    el.innerHTML = cover ? `<img alt="Trip cover" src="${URL.createObjectURL(cover.thumbBlob)}">` : '<span>📷</span>';
+  }
+}
+
+function bindPhotoButtons(root = document) {
+  root.querySelectorAll('.photo-log-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (btn.classList.contains('photo-has-count')) {
+        openPhotoMemoryModal({ timelineEntryId: btn.dataset.timelineId, itemId: btn.dataset.itemId });
+      } else {
+        addPhotoToTimelineEntry(btn.dataset.timelineId, btn.dataset.itemId);
+      }
+    });
+  });
+
+  root.querySelectorAll('.photo-item-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (btn.classList.contains('photo-has-count')) {
+        openPhotoMemoryModal({ itemId: btn.dataset.itemId });
+      } else {
+        addPhotoToItem(btn.dataset.itemId);
+      }
+    });
+  });
+
+  root.querySelectorAll('.trip-cover-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      setTripCoverPhoto();
+    });
+  });
+}
+
+async function openPhotoMemoryModal({ timelineEntryId = null, itemId = null } = {}) {
+  const activeTripId = Storage.getActiveTripId();
+  const all = await PhotoStore.getAll();
+  let photos = [];
+  if (timelineEntryId) photos = all.filter(p => p.timelineEntryId === timelineEntryId);
+  else if (itemId) photos = all.filter(p => p.tripId === activeTripId && p.itemId === itemId && p.photoType !== 'tripCover');
+
+  const entry = timelineEntryId && Storage.getTimelineEntry ? Storage.getTimelineEntry(timelineEntryId) : null;
+  const item = itemId ? findItemById(itemId) : (entry ? findItemById(entry.itemId) : null);
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-card photo-memory-card">
+      <div class="modal-header">
+        <h3>📷 ${item ? item.name : 'Photo memory'}</h3>
+        <button class="modal-close" aria-label="Close">✕</button>
+      </div>
+      <p class="modal-subtitle">Photos are stored locally on this device for now. <span data-photo-count></span> test photos used.</p>
+      <div class="photo-gallery">
+        ${photos.length ? photos.map(p => `<div class="photo-gallery-item" data-photo-id="${p.id}"><img alt="Photo memory" src="${URL.createObjectURL(p.imageBlob)}"><button class="photo-delete-btn" data-photo-id="${p.id}">Remove photo</button></div>`).join('') : '<p class="photo-empty">No photos attached yet.</p>'}
+      </div>
+      <button class="photo-add-large-btn">+ Add photo</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
+
+  const close = () => {
+    overlay.remove();
+    document.body.style.overflow = '';
+    refreshPhotoUI(document);
+  };
+  overlay.querySelector('.modal-close').addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+
+  overlay.querySelector('.photo-add-large-btn').addEventListener('click', async () => {
+    if (timelineEntryId) await addPhotoToTimelineEntry(timelineEntryId, itemId || (entry && entry.itemId));
+    else if (itemId) await addPhotoToItem(itemId);
+    close();
+  });
+
+  overlay.querySelectorAll('.photo-delete-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await PhotoStore.delete(btn.dataset.photoId);
+      showToast('Photo removed');
+      close();
+      openPhotoMemoryModal({ timelineEntryId, itemId });
+    });
+  });
+
+  refreshPhotoUI(overlay);
+}
+
+function findItemById(id) {
+  for (const park of PARKS) {
+    for (const section of park.sections) {
+      const item = section.items.find(i => i.id === id);
+      if (item) return item;
+    }
+  }
+  return null;
+}
+
+async function openTripMemoriesModal() {
+  const summary = Storage.getTripSummary();
+  const cover = await PhotoStore.getTripCover();
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  const timelineHtml = summary.parkSummaries.map(ps => {
+    if (!ps.timeline.length) return '';
+    return `
+      <div class="memories-park-block">
+        <div class="memories-park-heading">${ps.park.emoji} ${ps.park.name}</div>
+        ${ps.timeline.map(entry => `
+          ${entry.isNewDay ? `<div class="memories-date-heading">${entry.dateLabel}</div>` : ''}
+          <div class="memories-entry">
+            <div class="memories-entry-main">
+              <span class="memories-time">${entry.timeLabel}</span>
+              <span class="memories-name">${entry.name}${entry.isExtra ? ' <span class="todays-log-again">(again)</span>' : ''}</span>
+            </div>
+            <button class="photo-log-btn" data-timeline-id="${entry.id}" data-item-id="${entry.itemId}">📷 Add</button>
+            <div class="photo-thumb-strip" data-timeline-id="${entry.id}"></div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }).join('');
+
+  overlay.innerHTML = `
+    <div class="modal-card memories-card">
+      <div class="modal-header">
+        <h3>🖼️ Trip Memories</h3>
+        <button class="modal-close" aria-label="Close">✕</button>
+      </div>
+      <p class="modal-subtitle">Attach photos to the moments you logged. Local beta: <span data-photo-count></span> photos used.</p>
+      <button class="trip-cover-btn trip-cover-row">
+        <span class="trip-cover-preview">${cover ? `<img alt="Trip cover" src="${URL.createObjectURL(cover.thumbBlob)}">` : '<span>📷</span>'}</span>
+        <span><strong>Trip cover photo</strong><small>${cover ? 'Tap to replace' : 'Add a cover for this trip'}</small></span>
+      </button>
+      ${timelineHtml || '<p class="photo-empty">Nothing logged yet — check off a few rides, shows, or food spots first.</p>'}
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
+
+  const close = () => { overlay.remove(); document.body.style.overflow = ''; };
+  overlay.querySelector('.modal-close').addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  bindPhotoButtons(overlay);
+  refreshPhotoUI(overlay);
+}
+
+
 // If we have a remembered park, jump straight back into it; otherwise
 // land on the resort picker first.
 if (activeResortId && PARKS.some(p => p.id === activeParkId && p.resortId === activeResortId)) {
@@ -44,6 +425,7 @@ function renderTodaysLog() {
             <span class="todays-log-time">${e.timeLabel}</span>
             <span class="todays-log-badge">${BADGE_EMOJI[e.badge] || '•'}</span>
             <span class="todays-log-name">${e.name}${e.isExtra ? ' <span class="todays-log-again">(again)</span>' : ''}</span>
+            <button class="photo-log-btn" data-timeline-id="${e.id}" data-item-id="${e.itemId}" title="Add photo memory">📷 Add</button>
           </div>
         `).join('')}
       </div>
@@ -179,6 +561,9 @@ function renderResortScreen() {
       switchPark(parkId);
     });
   });
+
+  bindPhotoButtons(main);
+  refreshPhotoUI(main);
 
   const tripLabelBtn = document.getElementById('progress-dash-trip-label');
   if (tripLabelBtn) tripLabelBtn.addEventListener('click', () => openTripsModal());
@@ -329,6 +714,10 @@ function renderItemRow(item, checks, opts = {}) {
     </button>
   ` : '';
 
+  const photoBtnHtml = isDone ? `
+    <button class="photo-item-btn" data-item-id="${item.id}" title="Add photo memory">📷</button>
+  ` : '';
+
   const menuHtml = menuData ? `
     <div class="detail-block menu-block">
       <strong>🍽️ Menu highlights <span class="cost-tier">${menuData.tier}</span></strong>
@@ -380,6 +769,7 @@ function renderItemRow(item, checks, opts = {}) {
           ${infoBtn}
           ${stepperHtml}
           ${songBtnHtml}
+          ${photoBtnHtml}
         </div>
       </div>
       ${detailPanelHtml}
@@ -727,6 +1117,9 @@ function renderPark() {
       openSongPicker(btn.dataset.id);
     });
   });
+
+  bindPhotoButtons(main);
+  refreshPhotoUI(main);
 
   // Bind notes
   main.querySelector('.notes-input').addEventListener('input', e => {
@@ -2582,15 +2975,14 @@ function openTripsModal() {
         <h3>Your trips</h3>
         <button class="modal-close" aria-label="Close">✕</button>
       </div>
-      <p class="modal-subtitle">Each trip keeps its own checklist, stars, and stats — perfect for comparing this year's visit to last year's.</p>
+      <p class="modal-subtitle">Each trip keeps its own checklist, stars, stats, and photo memories.</p>
 
-      <section class="trip-modal-section trip-modal-section-first" aria-labelledby="trips-section-heading">
-        <div class="trip-modal-section-header">
-          <div>
-            <div class="trip-modal-section-kicker">Trips</div>
-            <h4 id="trips-section-heading" class="trip-modal-section-title">Current trip list</h4>
-          </div>
-        </div>
+      <div class="trip-modal-section">
+        <div class="trip-modal-section-heading">Trips</div>
+        <button class="trip-cover-btn trip-cover-row">
+          <span class="trip-cover-preview" data-trip-id="${activeId}"><span>📷</span></span>
+          <span><strong>Trip cover photo</strong><small>Add or replace the cover for this trip</small></span>
+        </button>
         <div class="trip-list">
           ${trips.map(trip => `
             <div class="trip-item${trip.id === activeId ? ' trip-item-active' : ''}" data-id="${trip.id}">
@@ -2606,55 +2998,42 @@ function openTripsModal() {
           `).join('')}
         </div>
         <button class="new-trip-btn">+ Start a new trip</button>
-      </section>
+      </div>
 
-      <section class="trip-modal-section" aria-labelledby="disney-life-section-heading">
-        <div class="trip-modal-section-header">
-          <div>
-            <div class="trip-modal-section-kicker">Your Disney Life</div>
-            <h4 id="disney-life-section-heading" class="trip-modal-section-title">Collections, badges, and history</h4>
-          </div>
-        </div>
-        <div class="trip-action-stack">
-          <button class="collections-btn trip-action-btn">📦 My Collections</button>
-          <button class="badges-btn trip-action-btn">🏆 My Badges</button>
-          <button class="history-btn trip-action-btn">📖 My Disney History</button>
-        </div>
-      </section>
+      <div class="trip-modal-section">
+        <div class="trip-modal-section-heading">Your Disney Life</div>
+        <button class="memories-btn">🖼️ Trip Memories</button>
+        <button class="collections-btn">📦 My Collections</button>
+        <button class="badges-btn">🏆 My Badges</button>
+        <button class="history-btn">📖 My Disney History</button>
+        <p class="trip-io-hint">Local photo beta: <span data-photo-count>0 / 20</span> photos used on this device.</p>
+      </div>
 
-      <section class="trip-modal-section" aria-labelledby="share-export-section-heading">
-        <div class="trip-modal-section-header">
-          <div>
-            <div class="trip-modal-section-kicker">Share / Export</div>
-            <h4 id="share-export-section-heading" class="trip-modal-section-title">Save recaps and move trip data</h4>
-          </div>
-        </div>
-
-        <div class="trip-export-group">
-          <div class="trip-export-heading">Current trip recap</div>
+      <div class="trip-modal-section">
+        <div class="trip-modal-section-heading">Share / Export</div>
+        <div class="recap-section recap-section-compact">
+          <div class="recap-section-heading">Current trip recap</div>
           <div class="recap-btn-row">
             <button class="recap-image-btn">📸 Save as image</button>
             <button class="recap-pdf-btn">📄 Save as PDF</button>
           </div>
         </div>
-
-        <div class="trip-export-group">
-          <div class="trip-export-heading">Master list</div>
+        <div class="recap-section recap-section-compact">
+          <div class="recap-section-heading">Master list — every trip, combined</div>
           <p class="trip-io-hint">A grand tally of how many times you've done each ride, show, and food spot across all your trips ever.</p>
           <div class="recap-btn-row">
             <button class="master-pdf-btn">📄 Save master list as PDF</button>
           </div>
         </div>
-
-        <div class="trip-export-group">
-          <div class="trip-export-heading">Import / export trips</div>
+        <div class="recap-section recap-section-compact">
+          <div class="recap-section-heading">Move trips between devices</div>
           <p class="trip-io-hint">For example: import or export your trip from another device to have all trips stored on one device.</p>
           <div class="trip-io-row">
             <button class="trip-export-all-btn">Send all my trips</button>
             <button class="trip-import-btn">Add trips from a file</button>
           </div>
         </div>
-      </section>
+      </div>
       <input type="file" id="trip-import-input" accept="application/json,.json" style="display:none;" />
     </div>
   `;
@@ -2765,6 +3144,14 @@ function openTripsModal() {
     close(false);
     openDisneyHistoryModal();
   });
+
+  overlay.querySelector('.memories-btn').addEventListener('click', () => {
+    close(false);
+    openTripMemoriesModal();
+  });
+
+  bindPhotoButtons(overlay);
+  refreshPhotoUI(overlay);
 
   // Export a single trip
   overlay.querySelectorAll('.trip-export').forEach(btn => {

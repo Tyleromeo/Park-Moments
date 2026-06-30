@@ -75,3 +75,17 @@ Edit `js/data.js`. Each item takes:
 ## Legal
 
 Not affiliated with or endorsed by The Walt Disney Company.
+
+## Local photo memories beta
+
+This build adds a local-only photo beta:
+
+- 20 test photos total across the app
+- Photos attach to completed timeline entries
+- Completed checklist rows show a photo button
+- Today's Log shows add/view photo controls
+- My Trips includes Trip Memories and a trip cover photo
+- Images are compressed in-browser to 1920px on the long edge with thumbnails
+- Photos are stored in IndexedDB on the user's device/browser only
+
+These photos do not sync between devices and are not uploaded to Vercel or Supabase.

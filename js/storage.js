@@ -161,6 +161,36 @@ const Storage = {
     this.saveAllTripsData(allData);
   },
 
+
+
+  // Ensures every timeline entry has a stable id for attaching local photo memories.
+  // Older Rope Drop trips may have entries created before ids existed, so this quietly
+  // upgrades the active trip the next time it is viewed.
+  ensureTimelineEntryIds() {
+    const tripId = this.ensureActiveTrip();
+    const allData = this.getAllTripsData();
+    const data = allData[tripId] || emptyTripData();
+    if (!Array.isArray(data.timeline)) data.timeline = [];
+    let changed = false;
+    data.timeline.forEach(entry => {
+      if (!entry.id) {
+        entry.id = uid();
+        changed = true;
+      }
+    });
+    if (changed) {
+      allData[tripId] = data;
+      this.saveAllTripsData(allData);
+    }
+    return data.timeline;
+  },
+
+  getTimelineEntry(entryId) {
+    if (!entryId) return null;
+    const timeline = this.ensureTimelineEntryIds();
+    return timeline.find(entry => entry.id === entryId) || null;
+  },
+
   // ── Checks (which items are ticked) ──────────────────────────────────
   getChecked() {
     return this._getTripData().checks;
@@ -176,7 +206,7 @@ const Storage = {
     const newState = data.checks[id];
     if (newState) {
       // Just checked on — log the moment it happened
-      data.timeline.push({ itemId: id, ts: Date.now() });
+      data.timeline.push({ id: uid(), itemId: id, ts: Date.now() });
     } else {
       // Unchecked — remove its most recent timeline entry so the
       // timeline stays accurate if someone taps it off by mistake
@@ -243,7 +273,7 @@ const Storage = {
   incrementCount(id) {
     const data = this._getTripData();
     data.counts[id] = (data.counts[id] || 0) + 1;
-    data.timeline.push({ itemId: id, ts: Date.now(), isExtra: true });
+    data.timeline.push({ id: uid(), itemId: id, ts: Date.now(), isExtra: true });
     this._saveTripData(data);
     return data.counts[id];
   },
@@ -576,7 +606,7 @@ const Storage = {
   getTodaysLog() {
     const meta = this.getAllTrips()[this.getActiveTripId()];
     const tripName = meta ? meta.name : 'My Disney Trip';
-    const timeline = this._getTripData().timeline || [];
+    const timeline = this.ensureTimelineEntryIds();
 
     const now = new Date();
     const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
@@ -615,6 +645,8 @@ const Storage = {
         entries: sorted.map(e => {
           const item = itemById[e.itemId];
           return {
+            id: e.id,
+            itemId: e.itemId,
             name: item ? item.name : 'Unknown',
             badge: item ? item.badge : 'family',
             timeLabel: new Date(e.ts).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
@@ -762,7 +794,7 @@ const Storage = {
     const checks = this.getChecked();
     const counts = this.getCounts();
     const songs = this.getSongs ? this.getSongs() : (this._getTripData().songs || {});
-    const timeline = this._getTripData().timeline || [];
+    const timeline = this.ensureTimelineEntryIds();
 
     // Build a quick lookup from itemId -> the park it belongs to, so
     // timeline entries (which only know itemId) can be grouped by park.
@@ -820,6 +852,8 @@ const Storage = {
           const isNewDay = dateKey !== lastDateKey;
           lastDateKey = dateKey;
           return {
+            id: e.id,
+            itemId: e.itemId,
             name: item ? item.name : 'Unknown',
             badge: item ? item.badge : 'family',
             time: e.ts,
