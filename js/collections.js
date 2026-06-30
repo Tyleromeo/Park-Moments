@@ -7,6 +7,7 @@
 const PREBUILT_COLLECTIONS = [
   {
     id: 'nighttime-spectaculars',
+    resortId: 'wdw',
     name: 'Nighttime Spectaculars',
     emoji: '🌙',
     description: "Walt Disney World's three regularly-scheduled nighttime shows — Happily Ever After, Luminous, and Fantasmic! Animal Kingdom doesn't run fireworks out of consideration for the animals.",
@@ -14,6 +15,7 @@ const PREBUILT_COLLECTIONS = [
   },
   {
     id: 'show-lover',
+    resortId: 'wdw',
     name: 'Show Lover',
     emoji: '🎭',
     description: 'Every permanent live show and nighttime spectacular at Walt Disney World — parades, stage shows, and the big nighttime trio.',
@@ -39,6 +41,24 @@ const PREBUILT_COLLECTIONS = [
     itemIds: ['mk-01', 'mk-13', 'hs-05', 'ep-01', 'ak-03', 'dl-08', 'dl-09', 'dca-01', 'dca-04'],
   },
   {
+    id: 'cosmic-rewind-mixtape',
+    name: 'Cosmic Rewind Mixtape',
+    emoji: '🎵',
+    resortId: 'wdw',
+    type: 'song',
+    itemId: 'ep-01',
+    description: 'Collect all six randomized Guardians of the Galaxy: Cosmic Rewind songs.',
+    songs: [
+      'September — Earth, Wind & Fire',
+      'Disco Inferno — The Trammps',
+      'Conga — Miami Sound Machine',
+      'Everybody Wants to Rule the World — Tears for Fears',
+      'I Ran — A Flock of Seagulls',
+      'One Way or Another — Blondie',
+    ],
+    itemIds: ['ep-01'],
+  },
+  {
     id: 'haunted-and-pirates',
     name: 'Haunted Mansion & Pirates, Everywhere',
     emoji: '👻',
@@ -54,6 +74,7 @@ const PREBUILT_COLLECTIONS = [
   },
   {
     id: 'epcot-world-showcase',
+    resortId: 'wdw',
     name: 'Every Country in EPCOT',
     emoji: '🌍',
     description: 'Visit all 11 World Showcase pavilions in one trip.',

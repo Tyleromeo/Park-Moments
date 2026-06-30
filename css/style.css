@@ -1667,6 +1667,20 @@ body {
   background: #d4923a;
 }
 
+
+.collection-group-heading {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 18px 0 8px;
+}
+
+.collection-group-heading:first-of-type {
+  margin-top: 14px;
+}
+
 .collection-list {
   display: flex;
   flex-direction: column;

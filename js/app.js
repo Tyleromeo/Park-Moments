@@ -2388,7 +2388,7 @@ function openBadgesModal() {
   const collections = getAllCollections().filter(c => c.itemIds && c.itemIds.length > 0);
   const collectionBadgeRows = collections.map(col => {
     const tiers = TIERED_COLLECTION_CONFIG[col.id];
-    const progress = Storage.getCollectionProgress(col.itemIds);
+    const progress = getCollectionProgressForCollection(col);
 
     if (tiers) {
       const tierCells = tiers.map(tier => {
@@ -2705,19 +2705,71 @@ function getAllCollections() {
   return [...prebuilt, ...custom];
 }
 
+function getCollectionProgressForCollection(col) {
+  if (col.type === 'song') {
+    const songLog = Storage.getSongLog(col.itemId);
+    const heardSet = new Set(songLog);
+    const songs = col.songs || [];
+    const doneItems = songs.filter(song => heardSet.has(song)).map(song => ({ id: song, name: song }));
+    const remainingItems = songs.filter(song => !heardSet.has(song)).map(song => ({ id: song, name: song }));
+    const total = songs.length;
+    const doneCount = doneItems.length;
+    const pct = total ? Math.round((doneCount / total) * 100) : 0;
+    return { total, doneCount, pct, doneItems, remainingItems };
+  }
+  return Storage.getCollectionProgress(col.itemIds || []);
+}
+
+function getCollectionGroupKey(col) {
+  if (col.isCustom) return 'custom';
+  if (col.resortId === 'wdw') return 'wdw';
+  if (col.resortId === 'dlr') return 'dlr';
+
+  const resortIds = new Set();
+  (col.itemIds || []).forEach(id => {
+    const foundPark = PARKS.find(park => park.sections.some(section => section.items.some(item => item.id === id)));
+    if (foundPark) resortIds.add(foundPark.resortId);
+  });
+
+  if (resortIds.size === 1) return [...resortIds][0];
+  if (resortIds.size > 1) return 'coast';
+  return 'custom';
+}
+
+function getCollectionGroupLabel(key) {
+  return {
+    wdw: 'Disney World Collections',
+    dlr: 'Disneyland Collections',
+    coast: 'Coast-to-Coast Collections',
+    custom: 'Your Custom Collections',
+  }[key] || 'Collections';
+}
+
 function renderCollectionsListHtml() {
   const collections = getAllCollections();
-  const rows = collections.map(col => {
-    const progress = Storage.getCollectionProgress(col.itemIds);
+  const groupOrder = ['wdw', 'dlr', 'coast', 'custom'];
+  const groupedHtml = groupOrder.map(groupKey => {
+    const groupCollections = collections.filter(col => getCollectionGroupKey(col) === groupKey);
+    if (!groupCollections.length) return '';
+    const rows = groupCollections.map(col => {
+      const progress = getCollectionProgressForCollection(col);
+      const progressLabel = col.type === 'song'
+        ? `${progress.doneCount} of ${progress.total} songs heard`
+        : `${progress.doneCount} of ${progress.total} done`;
+      return `
+        <button class="collection-row" data-id="${col.id}">
+          <span class="collection-row-emoji">${col.emoji}</span>
+          <span class="collection-row-body">
+            <span class="collection-row-name">${col.name}${col.isCustom ? ' <span class="collection-custom-tag">custom</span>' : ''}</span>
+            <span class="collection-row-sub">${progressLabel}</span>
+          </span>
+          <span class="collection-row-pct" style="color: ${progress.pct === 100 ? '#0f6e56' : 'inherit'}">${progress.pct === 100 ? '✅' : progress.pct + '%'}</span>
+        </button>
+      `;
+    }).join('');
     return `
-      <button class="collection-row" data-id="${col.id}">
-        <span class="collection-row-emoji">${col.emoji}</span>
-        <span class="collection-row-body">
-          <span class="collection-row-name">${col.name}${col.isCustom ? ' <span class="collection-custom-tag">custom</span>' : ''}</span>
-          <span class="collection-row-sub">${progress.doneCount} of ${progress.total} done</span>
-        </span>
-        <span class="collection-row-pct" style="color: ${progress.pct === 100 ? '#0f6e56' : 'inherit'}">${progress.pct === 100 ? '✅' : progress.pct + '%'}</span>
-      </button>
+      <div class="collection-group-heading">${getCollectionGroupLabel(groupKey)}</div>
+      <div class="collection-list">${rows}</div>
     `;
   }).join('');
 
@@ -2727,8 +2779,8 @@ function renderCollectionsListHtml() {
         <h3>📦 My Collections</h3>
         <button class="modal-close" aria-label="Close">✕</button>
       </div>
-      <p class="modal-subtitle">Track themed sets of attractions across every park — and see exactly what's left.</p>
-      <div class="collection-list">${rows}</div>
+      <p class="modal-subtitle">Track themed sets by Disney World, Disneyland, and coast-to-coast goals — and see exactly what's left.</p>
+      ${groupedHtml}
       <button class="new-collection-btn">+ Create a custom collection</button>
     </div>
   `;
@@ -2758,10 +2810,15 @@ function renderCollectionDetailHtml(collectionId) {
     collectionsDetailId = null;
     return renderCollectionsListHtml();
   }
-  const progress = Storage.getCollectionProgress(col.itemIds);
+  const progress = getCollectionProgressForCollection(col);
+  const remainingLabel = col.type === 'song' ? 'Songs left to hear' : `Only ${progress.remainingItems.length} left`;
+  const doneLabel = col.type === 'song' ? 'Songs heard' : 'Already done';
+  const completeLabel = col.type === 'song'
+    ? '🎉 You’ve heard every Cosmic Rewind song!'
+    : `🎉 You've completed this whole collection!`;
 
   const remainingHtml = progress.remainingItems.length > 0 ? `
-    <div class="collection-section-heading">Only ${progress.remainingItems.length} left</div>
+    <div class="collection-section-heading">${remainingLabel}</div>
     <div class="collection-item-list">
       ${progress.remainingItems.map(item => `
         <div class="collection-item-row">
@@ -2770,10 +2827,10 @@ function renderCollectionDetailHtml(collectionId) {
         </div>
       `).join('')}
     </div>
-  ` : `<div class="collection-complete-banner">🎉 You've completed this whole collection!</div>`;
+  ` : `<div class="collection-complete-banner">${completeLabel}</div>`;
 
   const doneHtml = progress.doneItems.length > 0 ? `
-    <div class="collection-section-heading">Already done</div>
+    <div class="collection-section-heading">${doneLabel}</div>
     <div class="collection-item-list">
       ${progress.doneItems.map(item => `
         <div class="collection-item-row collection-item-done">
@@ -3237,11 +3294,74 @@ function slugify(str) {
     .replace(/(^-|-$)/g, '') || 'rope-drop-trip';
 }
 
+function loadImageFromBlob(blob) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(img);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Could not load trip cover photo'));
+    };
+    img.src = url;
+  });
+}
+
+async function getActiveTripCoverImage() {
+  try {
+    const cover = await PhotoStore.getTripCover();
+    if (!cover) return null;
+    return await loadImageFromBlob(cover.imageBlob || cover.thumbBlob);
+  } catch (err) {
+    console.warn('Could not add trip cover to export', err);
+    return null;
+  }
+}
+
+function drawImageCover(ctx, img, x, y, w, h, radius = 0) {
+  const sourceRatio = img.width / img.height;
+  const targetRatio = w / h;
+  let sx = 0;
+  let sy = 0;
+  let sw = img.width;
+  let sh = img.height;
+
+  if (sourceRatio > targetRatio) {
+    sw = img.height * targetRatio;
+    sx = (img.width - sw) / 2;
+  } else {
+    sh = img.width / targetRatio;
+    sy = (img.height - sh) / 2;
+  }
+
+  ctx.save();
+  if (radius > 0) {
+    roundRect(ctx, x, y, w, h, radius);
+    ctx.clip();
+  }
+  ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+  ctx.restore();
+}
+
+function makeCoverExportDataUrl(img, w = 960, h = 600) {
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#f7f6f3';
+  ctx.fillRect(0, 0, w, h);
+  drawImageCover(ctx, img, 0, 0, w, h, 0);
+  return canvas.toDataURL('image/jpeg', 0.88);
+}
+
 // ── Recap canvas renderer (shared layout logic for JPEG export) ────────────
 // Draws a vertically-stacked recap: an overview card up top, then one
 // card per park visited. Returns the canvas element so callers can either
 // export it as a JPEG or hand it off to the PDF builder as an image.
-function buildRecapCanvas(summary) {
+function buildRecapCanvas(summary, coverImage = null) {
   const W = 900;
   const CARD_PADDING = 40;
   const HEADER_H = 220;
@@ -3280,13 +3400,25 @@ function buildRecapCanvas(summary) {
   ctx.fillStyle = headerGrad;
   ctx.fillRect(0, 0, W, HEADER_H);
 
+  if (coverImage) {
+    const coverW = 250;
+    const coverH = 150;
+    const coverX = W - CARD_PADDING - coverW;
+    const coverY = 34;
+    drawImageCover(ctx, coverImage, coverX, coverY, coverW, coverH, 16);
+    ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+    ctx.lineWidth = 2;
+    roundRect(ctx, coverX, coverY, coverW, coverH, 16);
+    ctx.stroke();
+  }
+
   ctx.fillStyle = '#ffffff';
   ctx.font = '600 15px "DM Sans", sans-serif';
   ctx.textBaseline = 'alphabetic';
   ctx.fillText('🎢 ROPE DROP RECAP', CARD_PADDING, 48);
 
   ctx.font = '400 38px "DM Serif Display", serif';
-  ctx.fillText(summary.tripName, CARD_PADDING, 96);
+  ctx.fillText(summary.tripName, CARD_PADDING, 96, coverImage ? 500 : W - CARD_PADDING * 2);
 
   ctx.font = '400 64px "DM Serif Display", serif';
   ctx.fillStyle = '#e0a04a';
@@ -3427,13 +3559,14 @@ function roundRect(ctx, x, y, w, h, r) {
 }
 
 // Renders the recap canvas and triggers a JPEG download
-function exportRecapImage() {
+async function exportRecapImage() {
   const summary = Storage.getTripSummary();
   if (summary.grandTotal === 0) {
     showToast('Check off a few things first — nothing to recap yet!', { wrap: true, duration: 3000 });
     return;
   }
-  const canvas = buildRecapCanvas(summary);
+  const coverImage = await getActiveTripCoverImage();
+  const canvas = buildRecapCanvas(summary, coverImage);
   canvas.toBlob((blob) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -3449,7 +3582,7 @@ function exportRecapImage() {
 
 // Renders the trip summary as a multi-page PDF: an overview page first,
 // then one page per park with full ride breakdowns.
-function exportRecapPDF() {
+async function exportRecapPDF() {
   const summary = Storage.getTripSummary();
   if (summary.grandTotal === 0) {
     showToast('Check off a few things first — nothing to recap yet!', { wrap: true, duration: 3000 });
@@ -3468,12 +3601,17 @@ function exportRecapPDF() {
   let y = margin;
 
   const CAT_LABELS = { rides: 'Rides', show: 'Shows', food: 'Food & drink', character: 'Character meets' };
+  const coverImage = await getActiveTripCoverImage();
+  const coverDataUrl = coverImage ? makeCoverExportDataUrl(coverImage) : null;
 
   // ── Overview page ──
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.setTextColor(120, 120, 120);
   doc.text('ROPE DROP RECAP', margin, y);
+  if (coverDataUrl) {
+    doc.addImage(coverDataUrl, 'JPEG', pageW - margin - 190, margin - 4, 190, 118);
+  }
   y += 28;
 
   doc.setFont('times', 'normal');

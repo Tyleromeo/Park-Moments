@@ -100,7 +100,9 @@ function getEarnedCollectionBadges() {
   const collections = getAllCollections();
   collections.forEach(col => {
     if (!col.itemIds || col.itemIds.length === 0) return;
-    const progress = Storage.getCollectionProgress(col.itemIds);
+    const progress = (typeof getCollectionProgressForCollection === 'function')
+      ? getCollectionProgressForCollection(col)
+      : Storage.getCollectionProgress(col.itemIds);
     const tiers = TIERED_COLLECTION_CONFIG[col.id];
 
     if (tiers) {
