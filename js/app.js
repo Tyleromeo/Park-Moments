@@ -3938,16 +3938,20 @@ async function exportRecapPDF() {
   doc.setFontSize(11);
   doc.setTextColor(120, 120, 120);
   doc.text('ROPE DROP RECAP', margin, y);
+  const coverW = 250;
+  const coverH = 156;
   if (coverDataUrl) {
-    doc.addImage(coverDataUrl, 'JPEG', pageW - margin - 190, margin - 4, 190, 118);
+    doc.addImage(coverDataUrl, 'JPEG', pageW - margin - coverW, margin - 4, coverW, coverH);
   }
   y += 28;
 
   doc.setFont('times', 'normal');
   doc.setFontSize(28);
   doc.setTextColor(30, 28, 24);
-  doc.text(summary.tripName, margin, y);
-  y += 46;
+  const titleMaxW = coverDataUrl ? pageW - margin * 2 - coverW - 24 : pageW - margin * 2;
+  const titleLines = doc.splitTextToSize(summary.tripName, titleMaxW);
+  doc.text(titleLines, margin, y, { lineHeightFactor: 1.08 });
+  y += 34 * titleLines.length + 12;
 
   doc.setFontSize(48);
   doc.setTextColor(224, 146, 42);
@@ -3959,16 +3963,15 @@ async function exportRecapPDF() {
   doc.text('total activities logged', margin + totalNumWidth + 14, y - 6);
   y += 36;
 
-  const catLine = Object.entries(summary.grandByCategory)
+  const catLines = Object.entries(summary.grandByCategory)
     .filter(([, c]) => c > 0)
-    .map(([cat, c]) => `${CAT_LABELS[cat]}: ${c}`)
-    .join('    ·    ');
-  doc.setFontSize(coverDataUrl ? 10.5 : 12);
+    .map(([cat, c]) => `${CAT_LABELS[cat]}: ${c}`);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(12);
   doc.setTextColor(70, 70, 70);
-  const catMaxW = coverDataUrl ? pageW - margin * 2 - 220 : pageW - margin * 2;
-  const catLines = doc.splitTextToSize(catLine, catMaxW);
+  const catLineHeight = 17;
   doc.text(catLines, margin, y, { lineHeightFactor: 1.25 });
-  y += 18 * catLines.length + 12;
+  y += catLineHeight * catLines.length + 14;
 
   if (summary.mostRiddenItem && summary.mostRiddenItem.times > 1) {
     doc.setFillColor(251, 238, 226);
