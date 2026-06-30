@@ -3562,6 +3562,122 @@ async function buildPDFPhotoMemories(summary, tripId = Storage.getActiveTripId()
   }
 }
 
+
+function cleanPDFText(text) {
+  // jsPDF's built-in fonts can render normal text well, but emoji can turn
+  // into odd symbols. Strip emoji/surrogate glyphs from PDF-only text.
+  return String(text || '')
+    .replace(/[\uD800-\uDFFF]/g, '')
+    .replace(/[\uFE0E\uFE0F]/g, '')
+    .replace(/\s+\n/g, '\n')
+    .trim();
+}
+
+function getPDFTripNotes(tripId = Storage.getActiveTripId()) {
+  const meta = Storage.getAllTrips()[tripId];
+  const tripData = Storage._getTripData(tripId);
+  const notes = tripData.notes || {};
+  return Object.entries(notes)
+    .map(([parkId, text]) => {
+      const cleaned = cleanPDFText(text);
+      if (!cleaned) return null;
+      const park = PARKS.find(p => p.id === parkId);
+      return {
+        tripId,
+        tripName: meta ? meta.name : 'My Disney Trip',
+        parkName: park ? park.name : 'Park notes',
+        text: cleaned,
+      };
+    })
+    .filter(Boolean);
+}
+
+function getAllPDFTripNotes() {
+  return Storage.listTrips().flatMap(trip => getPDFTripNotes(trip.id));
+}
+
+function addPDFTripNotesSection(doc, notes, pageW, pageH, margin, options = {}) {
+  if (!notes || notes.length === 0) return;
+
+  const title = options.title || 'Trip Notes';
+  const subtitle = options.subtitle || 'Notes saved inside Rope Drop for this trip.';
+  const includeTripName = !!options.includeTripName;
+  const contentW = pageW - margin * 2;
+  const lineH = 14;
+  let y = margin;
+  let lastTripName = '';
+
+  const addHeaderPage = (isContinuation = false) => {
+    doc.addPage();
+    y = margin;
+    doc.setFont('times', 'normal');
+    doc.setFontSize(isContinuation ? 22 : 26);
+    doc.setTextColor(30, 28, 24);
+    doc.text(isContinuation ? `${title} continued` : title, margin, y);
+    y += isContinuation ? 30 : 18;
+    if (!isContinuation && subtitle) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      doc.setTextColor(110, 110, 110);
+      const subLines = doc.splitTextToSize(cleanPDFText(subtitle), contentW);
+      doc.text(subLines, margin, y + 16, { lineHeightFactor: 1.25 });
+      y += 34 + subLines.length * 12;
+      doc.setDrawColor(225, 225, 225);
+      doc.line(margin, y, pageW - margin, y);
+      y += 26;
+    }
+  };
+
+  addHeaderPage(false);
+
+  notes.forEach(note => {
+    const tripName = cleanPDFText(note.tripName || 'Trip');
+    const parkName = cleanPDFText(note.parkName || 'Park notes');
+    const textLines = doc.splitTextToSize(cleanPDFText(note.text), contentW - 24);
+    const needsTripHeader = includeTripName && tripName !== lastTripName;
+
+    if (needsTripHeader) {
+      if (y > pageH - margin - 70) addHeaderPage(true);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.setTextColor(30, 28, 24);
+      doc.text(tripName, margin, y);
+      y += 20;
+      lastTripName = tripName;
+    }
+
+    if (y > pageH - margin - 58) addHeaderPage(true);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(184, 118, 31);
+    doc.text(parkName.toUpperCase(), margin, y);
+    y += 18;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10.5);
+    doc.setTextColor(55, 52, 48);
+
+    let i = 0;
+    while (i < textLines.length) {
+      const room = Math.max(1, Math.floor((pageH - margin - 34 - y) / lineH));
+      if (room <= 1) {
+        addHeaderPage(true);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10.5);
+        doc.setTextColor(55, 52, 48);
+        continue;
+      }
+      const chunk = textLines.slice(i, i + room);
+      doc.text(chunk, margin + 12, y, { lineHeightFactor: 1.25 });
+      y += chunk.length * lineH + 8;
+      i += chunk.length;
+    }
+
+    y += 10;
+  });
+}
+
 function addPDFPhotoMemoriesSection(doc, memories, pageW, pageH, margin) {
   if (!memories || memories.length === 0) return;
 
@@ -4009,6 +4125,12 @@ async function exportRecapPDF() {
     y += 20;
   });
 
+  // ── Optional trip notes page ──
+  addPDFTripNotesSection(doc, getPDFTripNotes(Storage.getActiveTripId()), pageW, pageH, margin, {
+    title: 'Trip Notes',
+    subtitle: 'Notes saved for this trip, grouped by park.',
+  });
+
   // ── One page per park with full checklist breakdown ──
   summary.parkSummaries.forEach(ps => {
     doc.addPage();
@@ -4260,8 +4382,12 @@ function exportMasterListPDF() {
     y += 18;
   });
 
-  // ── Optional photo memories scrapbook pages ──
-  addPDFPhotoMemoriesSection(doc, photoMemories, pageW, pageH, margin);
+  // ── Optional all-trip notes pages ──
+  addPDFTripNotesSection(doc, getAllPDFTripNotes(), pageW, pageH, margin, {
+    title: 'Trip Notes',
+    subtitle: 'Notes saved across every trip, grouped by trip and park.',
+    includeTripName: true,
+  });
 
   // Footer disclaimer on every page
   const pageCount = doc.internal.getNumberOfPages();
