@@ -752,11 +752,8 @@ function renderItemRow(item, checks, opts = {}) {
     ? `<button class="remove-must-btn" data-id="${item.id}" aria-label="Remove from must-dos" title="Remove from must-dos">✕</button>`
     : `<button class="star-btn${isStarred ? ' starred' : ''}" data-id="${item.id}" aria-pressed="${isStarred}" aria-label="${isStarred ? 'Remove from your must-dos' : 'Add to your must-dos'}" title="${isStarred ? 'Your must-do' : 'Mark as your must-do'}">${isStarred ? '★' : '☆'}</button>`;
 
-  const reorderBtns = inMustDos ? `
-    <div class="reorder-btns">
-      <button class="reorder-up-btn" data-id="${item.id}" aria-label="Move up" title="Move up" ${isFirst ? 'disabled' : ''}>▲</button>
-      <button class="reorder-down-btn" data-id="${item.id}" aria-label="Move down" title="Move down" ${isLast ? 'disabled' : ''}>▼</button>
-    </div>
+  const reorderHandle = inMustDos ? `
+    <button class="must-drag-handle" data-id="${item.id}" aria-label="Drag to reorder ${item.name}" title="Drag to reorder">☰</button>
   ` : '';
 
   const checkIcon = isDone
@@ -829,7 +826,7 @@ function renderItemRow(item, checks, opts = {}) {
   ` : '';
 
   return `
-    <div class="item-wrap">
+    <div class="item-wrap${inMustDos ? ' must-do-wrap' : ''}" ${inMustDos ? `data-must-do-id="${item.id}"` : ''}>
       <div class="item-row${isDone ? ' item-done' : ''}" data-id="${item.id}">
         ${starOrRemoveBtn}
         <button class="item" data-id="${item.id}" aria-pressed="${isDone}" aria-label="${item.name}${isDone ? ' — completed' : ''}">
@@ -842,7 +839,7 @@ function renderItemRow(item, checks, opts = {}) {
           <span class="badge ${badge.cls}">${badge.label}</span>
         </button>
         <div class="item-extras">
-          ${reorderBtns}
+          ${reorderHandle}
           ${infoBtn}
           ${stepperHtml}
           ${songBtnHtml}
@@ -995,7 +992,7 @@ function renderPark() {
     .filter(item => item && categoryForBadge(item.badge) === activeCategory);
 
   if (allStarredItems.length > 0) {
-    html += `<div class="section must-dos-section"><h2 class="section-heading must-dos-heading">★ Your must-dos</h2>`;
+    html += `<div class="section must-dos-section" data-must-dos-list="${park.id}"><h2 class="section-heading must-dos-heading">★ Your must-dos</h2>`;
     allStarredItems.forEach((item, idx) => {
       html += renderItemRow(item, checks, {
         inMustDos: true,
@@ -1148,25 +1145,7 @@ function renderPark() {
     });
   });
 
-  // Bind must-do reorder buttons
-  main.querySelectorAll('.reorder-up-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-      Storage.moveStarredItem(btn.dataset.id, -1);
-      renderPark();
-    });
-  });
-  main.querySelectorAll('.reorder-down-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-      Storage.moveStarredItem(btn.dataset.id, 1);
-      renderPark();
-    });
-  });
+  bindMustDoDrag(main, park);
 
   // Bind item taps (the main check toggle)
   main.querySelectorAll('.item').forEach(btn => {
@@ -1227,6 +1206,120 @@ function renderBottomBar(park, done, total, pct) {
   resetBtn.onclick = () => resetPark(park);
 }
 
+function bindMustDoDrag(root, park) {
+  const list = root.querySelector('[data-must-dos-list]');
+  if (!list) return;
+
+  let drag = null;
+  const getRows = () => Array.from(list.querySelectorAll('.must-do-wrap[data-must-do-id]'));
+
+  const startDrag = (handle, row, clientY, pointerId = null) => {
+    if (drag) return false;
+    row.classList.add('must-dragging');
+    list.classList.add('must-drag-active');
+    drag = { handle, row, pointerId, startY: clientY, moved: false };
+    return true;
+  };
+
+  const moveDrag = (clientY) => {
+    if (!drag) return;
+
+    if (Math.abs(clientY - drag.startY) > 4) drag.moved = true;
+    const target = getRows().find(row => {
+      if (row === drag.row) return false;
+      const rect = row.getBoundingClientRect();
+      return clientY >= rect.top && clientY <= rect.bottom;
+    });
+    if (!target) return;
+
+    const rect = target.getBoundingClientRect();
+    if (clientY < rect.top + rect.height / 2) {
+      list.insertBefore(drag.row, target);
+    } else {
+      list.insertBefore(drag.row, target.nextSibling);
+    }
+  };
+
+  const finishDrag = (pointerId = null) => {
+    if (!drag) return;
+    if (drag.pointerId !== null && pointerId !== drag.pointerId) return;
+    const { handle, row, moved } = drag;
+
+    row.classList.remove('must-dragging');
+    list.classList.remove('must-drag-active');
+    if (drag.pointerId !== null) {
+      try { handle.releasePointerCapture(drag.pointerId); } catch {}
+    }
+
+    if (moved) {
+      const orderedIds = getRows().map(el => el.dataset.mustDoId);
+      Storage.setStarOrder(park.id, orderedIds);
+      showToast('Must-dos reordered');
+      renderPark();
+    }
+
+    drag = null;
+  };
+
+  list.querySelectorAll('.must-drag-handle').forEach(handle => {
+    handle.addEventListener('pointerdown', (e) => {
+      if (e.button !== undefined && e.button !== 0) return;
+      const row = handle.closest('.must-do-wrap[data-must-do-id]');
+      if (!row) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      if (handle.setPointerCapture) handle.setPointerCapture(e.pointerId);
+      startDrag(handle, row, e.clientY, e.pointerId);
+    });
+
+    handle.addEventListener('pointermove', (e) => {
+      if (!drag || drag.pointerId !== e.pointerId) return;
+      moveDrag(e.clientY);
+    });
+
+    handle.addEventListener('pointerup', e => finishDrag(e.pointerId));
+    handle.addEventListener('pointercancel', e => finishDrag(e.pointerId));
+
+    handle.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      const row = handle.closest('.must-do-wrap[data-must-do-id]');
+      if (!row || !startDrag(handle, row, e.clientY)) return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      const onMove = (moveEvent) => {
+        moveEvent.preventDefault();
+        moveDrag(moveEvent.clientY);
+      };
+      const onUp = () => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        finishDrag();
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+
+    handle.addEventListener('touchstart', (e) => {
+      if (e.touches.length !== 1) return;
+      const row = handle.closest('.must-do-wrap[data-must-do-id]');
+      if (!row || !startDrag(handle, row, e.touches[0].clientY)) return;
+      e.preventDefault();
+      e.stopPropagation();
+    }, { passive: false });
+
+    handle.addEventListener('touchmove', (e) => {
+      if (!drag || e.touches.length !== 1) return;
+      e.preventDefault();
+      moveDrag(e.touches[0].clientY);
+    }, { passive: false });
+
+    handle.addEventListener('touchend', () => finishDrag());
+    handle.addEventListener('touchcancel', () => finishDrag());
+  });
+}
+
 // ── Actions ──────────────────────────────────────────────────────────────────
 function switchPark(id) {
   if (resortScreenRefreshTimer) {
@@ -1264,6 +1357,16 @@ function toggleItem(id) {
       // in a single check (e.g. hitting both Silver and Gold at once
       // because the park only had a couple of items left).
       showBadgeCelebration(newBadges, 0);
+    }
+
+    // Check for any Coast to Coast ride pairs newly unlocked by this
+    // check-in (i.e. they've now ridden both versions of the same ride
+    // across both resorts). Only celebrate genuinely new unlocks, never
+    // re-celebrate one already seen.
+    const newlyUnlockedPairs = getUnlockedCoastToCoastPairs().filter(p => !hasSeenSecretMenuUnlock(p.id));
+    if (newlyUnlockedPairs.length > 0) {
+      markSecretMenuUnlocksSeen(newlyUnlockedPairs.map(p => p.id));
+      showSecretMenuCelebration(newlyUnlockedPairs[0]);
     }
   }
 }
@@ -1390,7 +1493,20 @@ const ROUND_SIZE = 10;
 // than failing — this matters for thinner level-4 pools.
 function buildRoundFromPool(pool) {
   const shuffled = pool.map(q => ({ q, sort: Math.random() })).sort((a, b) => a.sort - b.sort).map(x => x.q);
-  return shuffled.slice(0, Math.min(ROUND_SIZE, shuffled.length));
+  return shuffled.slice(0, Math.min(ROUND_SIZE, shuffled.length)).map(shuffleQuestionOptions);
+}
+
+function shuffleQuestionOptions(question) {
+  const shuffledOptions = question.options
+    .map((option, originalIndex) => ({ option, originalIndex, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort);
+
+  const correct = shuffledOptions.findIndex(opt => opt.originalIndex === question.correct);
+  return {
+    ...question,
+    options: shuffledOptions.map(opt => opt.option),
+    correct: correct >= 0 ? correct : question.correct,
+  };
 }
 
 function renderPlayTab(park) {
@@ -2421,6 +2537,96 @@ async function shareDisneyHistoryImage(p) {
   }
 }
 
+// ── Secret menu: Coast to Coast — vote on duplicate rides ───────────────────
+function openCoastToCoastModal() {
+  const unlockedPairs = getUnlockedCoastToCoastPairs();
+  const lockedPairs = COAST_TO_COAST_PAIRS.filter(p => !unlockedPairs.includes(p));
+
+  const renderPairRow = (pair, unlocked) => {
+    if (!unlocked) {
+      return `
+        <div class="c2c-row c2c-row-locked">
+          <span class="c2c-row-emoji">🔒</span>
+          <span class="c2c-row-body">
+            <span class="c2c-row-name">${pair.name}</span>
+            <span class="c2c-row-sub">Ride both versions to unlock</span>
+          </span>
+        </div>
+      `;
+    }
+
+    const tally = getCoastToCoastTally(pair.id);
+    const hasVoted = !!tally.myVote;
+
+    return `
+      <div class="c2c-row c2c-row-unlocked" data-pair-id="${pair.id}">
+        <div class="c2c-row-header">
+          <span class="c2c-row-emoji">${pair.emoji}</span>
+          <span class="c2c-row-name">${pair.name}</span>
+        </div>
+        ${hasVoted ? `
+          <div class="c2c-tally">
+            <div class="c2c-tally-bar">
+              <span class="c2c-tally-fill c2c-tally-wdw" style="width: ${tally.wdwPct}%;"></span>
+            </div>
+            <div class="c2c-tally-labels">
+              <span>${pair.wdw.label} — ${tally.wdwPct}%</span>
+              <span>${pair.dlr.label} — ${tally.dlrPct}%</span>
+            </div>
+            <div class="c2c-voted-note">You voted: ${tally.myVote === 'wdw' ? pair.wdw.label : pair.dlr.label} ✓</div>
+          </div>
+        ` : `
+          <div class="c2c-vote-prompt">Which version did you like better?</div>
+          <div class="c2c-vote-btns">
+            <button class="c2c-vote-btn" data-pair-id="${pair.id}" data-choice="wdw">${pair.wdw.label}</button>
+            <button class="c2c-vote-btn" data-pair-id="${pair.id}" data-choice="dlr">${pair.dlr.label}</button>
+          </div>
+        `}
+      </div>
+    `;
+  };
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>🤫 Coast to Coast</h3>
+        <button class="modal-close" aria-label="Close">✕</button>
+      </div>
+      <p class="modal-subtitle">You found the secret menu! Once you've ridden both versions of an iconic ride at both resorts, vote for your favorite below.</p>
+      <div class="c2c-list">
+        ${unlockedPairs.map(p => renderPairRow(p, true)).join('')}
+        ${lockedPairs.map(p => renderPairRow(p, false)).join('')}
+      </div>
+      <p class="c2c-disclaimer">Results reflect votes from Rope Drop users on this device and a small starting sample — not an official or scientific poll.</p>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
+
+  const close = () => {
+    overlay.remove();
+    document.body.style.overflow = '';
+  };
+  overlay.querySelector('.modal-close').addEventListener('click', close);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+  overlay.querySelectorAll('.c2c-vote-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pairId = btn.dataset.pairId;
+      const choice = btn.dataset.choice;
+      const success = castCoastToCoastVote(pairId, choice);
+      if (success) {
+        showToast('Vote cast! 🗳️');
+        close();
+        openCoastToCoastModal(); // re-render with the new tally
+      }
+    });
+  });
+}
+
 function openBadgesModal() {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
@@ -2579,6 +2785,44 @@ function openBadgesModal() {
 }
 
 // ── Badge celebration — pops when a new badge is earned ────────────────────
+// ── Secret menu unlock celebration ──────────────────────────────────────────
+function showSecretMenuCelebration(pair) {
+  const overlay = document.createElement('div');
+  overlay.className = 'badge-celebration-overlay';
+
+  const isFirstEver = getUnlockedCoastToCoastPairs().length === 1;
+
+  overlay.innerHTML = `
+    <div class="badge-celebration-card">
+      <div class="badge-celebration-emoji-wrap">
+        <span class="badge-celebration-emoji">${pair.emoji}</span>
+        <span class="badge-celebration-ribbon">🤫</span>
+      </div>
+      <div class="badge-celebration-title">${isFirstEver ? 'You found the secret menu!' : 'Another one unlocked!'}</div>
+      <div class="badge-celebration-subtitle">You've ridden both versions of ${pair.name} — cast your vote for which one's better.</div>
+      <div class="badge-celebration-btns">
+        <button class="badge-celebration-share">🗳️ Vote now</button>
+        <button class="badge-celebration-dismiss">Later</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
+
+  const close = () => {
+    overlay.remove();
+    document.body.style.overflow = '';
+  };
+
+  overlay.querySelector('.badge-celebration-dismiss').addEventListener('click', close);
+  overlay.querySelector('.badge-celebration-share').addEventListener('click', () => {
+    close();
+    openCoastToCoastModal();
+  });
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+}
+
 function showBadgeCelebration(badges, index) {
   if (index >= badges.length) return;
   const badge = badges[index];
@@ -3182,6 +3426,7 @@ function openTripsModal() {
         <button class="collections-btn">📦 My Collections</button>
         <button class="badges-btn">🏆 My Badges</button>
         <button class="history-btn">📖 My Disney History</button>
+        ${isSecretMenuUnlocked() ? `<button class="secret-menu-btn">🤫 Coast to Coast</button>` : ''}
         <p class="trip-io-hint">Local photo beta: <span data-photo-count>0 / 20</span> photos used on this device.</p>
       </div>
 
@@ -3320,6 +3565,14 @@ function openTripsModal() {
     close(false);
     openDisneyHistoryModal();
   });
+
+  const secretMenuBtn = overlay.querySelector('.secret-menu-btn');
+  if (secretMenuBtn) {
+    secretMenuBtn.addEventListener('click', () => {
+      close(false);
+      openCoastToCoastModal();
+    });
+  }
 
   overlay.querySelector('.memories-btn').addEventListener('click', () => {
     close(false);

@@ -405,6 +405,35 @@ const Storage = {
     return cleaned;
   },
 
+  // Reorders the visible subset of starred items for a park. Any starred
+  // items not present in orderedIds keep their relative positions.
+  setStarOrder(parkId, orderedIds) {
+    if (!parkId || !Array.isArray(orderedIds)) return;
+
+    const existingOrder = this.getStarOrder(parkId);
+    const incoming = [];
+    orderedIds.forEach(id => {
+      if (existingOrder.includes(id) && !incoming.includes(id)) incoming.push(id);
+    });
+    if (incoming.length === 0) return;
+
+    const incomingSet = new Set(incoming);
+    const merged = [];
+    let incomingIndex = 0;
+    existingOrder.forEach(id => {
+      if (incomingSet.has(id)) {
+        merged.push(incoming[incomingIndex++]);
+      } else {
+        merged.push(id);
+      }
+    });
+
+    const data = this._getTripData();
+    if (!data.starOrder) data.starOrder = {};
+    data.starOrder[parkId] = merged;
+    this._saveTripData(data);
+  },
+
   // Moves a starred item up or down one position within its park's
   // must-do order. direction is -1 (up/earlier) or 1 (down/later).
   moveStarredItem(itemId, direction) {

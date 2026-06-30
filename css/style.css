@@ -1156,40 +1156,50 @@ body {
   background: var(--bg-2);
 }
 
-.reorder-btns {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  flex-shrink: 0;
-}
-
-.reorder-up-btn,
-.reorder-down-btn {
-  width: 26px;
-  height: 18px;
+.must-drag-handle {
+  width: 44px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
-  background: var(--bg-2);
+  background: transparent;
   color: var(--text-3);
-  cursor: pointer;
-  font-size: 9px;
+  cursor: grab;
+  font-size: 20px;
   line-height: 1;
-  border-radius: 4px;
-  transition: background 0.12s, color 0.12s;
+  border-radius: var(--radius-sm);
+  transition: background 0.12s, color 0.12s, transform 0.12s;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
 }
 
-.reorder-up-btn:hover:not(:disabled),
-.reorder-down-btn:hover:not(:disabled) {
-  background: var(--bg-3);
+.must-drag-handle:hover,
+.must-drag-handle:active {
+  background: var(--bg-2);
   color: var(--text-1);
 }
 
-.reorder-up-btn:disabled,
-.reorder-down-btn:disabled {
-  opacity: 0.25;
-  cursor: not-allowed;
+.must-drag-handle:active {
+  cursor: grabbing;
+  transform: scale(1.04);
+}
+
+.must-drag-active {
+  user-select: none;
+}
+
+.must-dragging {
+  position: relative;
+  z-index: 3;
+  opacity: 0.78;
+}
+
+.must-dragging .item-row {
+  background: var(--bg-2);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
 }
 
 .star-btn {
@@ -1570,6 +1580,168 @@ body {
 .badges-btn:hover {
   background: var(--bg-3);
   border-color: var(--text-2);
+}
+
+.secret-menu-btn {
+  width: 100%;
+  padding: 13px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed #8a6fd4;
+  background: #f0ebfc;
+  color: #5b38b0;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-body);
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.secret-menu-btn:hover {
+  background: #e6ddf7;
+}
+
+@media (prefers-color-scheme: dark) {
+  .secret-menu-btn { background: #1a1030; color: #b89ef0; border-color: #5b3fa0; }
+  .secret-menu-btn:hover { background: #241548; }
+}
+
+.c2c-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.c2c-row {
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.c2c-row-locked {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  opacity: 0.5;
+}
+
+.c2c-row-emoji {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.c2c-row-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.c2c-row-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.c2c-row-sub {
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+.c2c-row-unlocked {
+  background: #f0ebfc;
+  border-color: #d8cdf0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .c2c-row-unlocked { background: #1a1030; border-color: #3a2a5a; }
+}
+
+.c2c-row-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.c2c-row-header .c2c-row-name {
+  font-size: 14px;
+}
+
+.c2c-vote-prompt {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-bottom: 8px;
+}
+
+.c2c-vote-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.c2c-vote-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid #8a6fd4;
+  background: var(--bg);
+  color: #5b38b0;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.c2c-vote-btn:hover {
+  background: #e6ddf7;
+}
+
+@media (prefers-color-scheme: dark) {
+  .c2c-vote-btn { color: #b89ef0; background: var(--bg-2); }
+  .c2c-vote-btn:hover { background: #241548; }
+}
+
+.c2c-tally-bar {
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: #8a6fd4;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.c2c-tally-fill {
+  display: block;
+  height: 100%;
+  background: #5b38b0;
+}
+
+.c2c-tally-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.c2c-voted-note {
+  font-size: 11px;
+  color: #5b38b0;
+  font-weight: 700;
+  margin-top: 8px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .c2c-voted-note { color: #b89ef0; }
+}
+
+.c2c-disclaimer {
+  font-size: 11px;
+  color: var(--text-3);
+  text-align: center;
+  margin-top: 8px;
+  line-height: 1.4;
 }
 
 .history-btn {
