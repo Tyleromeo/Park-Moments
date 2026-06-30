@@ -3729,10 +3729,12 @@ function buildRecapCanvas(summary, coverImage = null) {
   ctx.fillRect(0, 0, W, HEADER_H);
 
   if (coverImage) {
-    const coverW = 250;
-    const coverH = 150;
+    // Larger trip cover for the exported recap image. Keep the bottom
+    // almost flush with the first white park section below the header.
+    const coverW = 300;
+    const coverH = 180;
     const coverX = W - CARD_PADDING - coverW;
-    const coverY = 34;
+    const coverY = HEADER_H - coverH - 8;
     drawImageCover(ctx, coverImage, coverX, coverY, coverW, coverH, 16);
     ctx.strokeStyle = 'rgba(255,255,255,0.28)';
     ctx.lineWidth = 2;
@@ -3746,7 +3748,7 @@ function buildRecapCanvas(summary, coverImage = null) {
   ctx.fillText('🎢 ROPE DROP RECAP', CARD_PADDING, 48);
 
   ctx.font = '400 38px "DM Serif Display", serif';
-  ctx.fillText(summary.tripName, CARD_PADDING, 96, coverImage ? 500 : W - CARD_PADDING * 2);
+  ctx.fillText(summary.tripName, CARD_PADDING, 96, coverImage ? W - CARD_PADDING * 2 - 324 : W - CARD_PADDING * 2);
 
   ctx.font = '400 64px "DM Serif Display", serif';
   ctx.fillStyle = '#e0a04a';
@@ -3938,17 +3940,14 @@ async function exportRecapPDF() {
   doc.setFontSize(11);
   doc.setTextColor(120, 120, 120);
   doc.text('ROPE DROP RECAP', margin, y);
-  const coverW = 320;
-  const coverH = 200;
-  if (coverDataUrl) {
-    doc.addImage(coverDataUrl, 'JPEG', pageW - margin - coverW, margin - 4, coverW, coverH);
-  }
+  const coverW = 448;
+  const coverH = 280;
   y += 28;
 
   doc.setFont('times', 'normal');
   doc.setFontSize(28);
   doc.setTextColor(30, 28, 24);
-  const titleMaxW = coverDataUrl ? pageW - margin * 2 - coverW - 24 : pageW - margin * 2;
+  const titleMaxW = pageW - margin * 2;
   const titleLines = doc.splitTextToSize(summary.tripName, titleMaxW);
   doc.text(titleLines, margin, y, { lineHeightFactor: 1.08 });
   y += 34 * titleLines.length + 12;
@@ -3971,11 +3970,12 @@ async function exportRecapPDF() {
   doc.setTextColor(70, 70, 70);
   const catLineHeight = 17;
   doc.text(catLines, margin, y, { lineHeightFactor: 1.25 });
-  y += catLineHeight * catLines.length + 14;
+  y += catLineHeight * catLines.length + 18;
 
-  const coverBottomY = coverDataUrl ? (margin - 4 + coverH) : 0;
-  if (coverBottomY && y < coverBottomY + 18) {
-    y = coverBottomY + 18;
+  if (coverDataUrl) {
+    const coverX = (pageW - coverW) / 2;
+    doc.addImage(coverDataUrl, 'JPEG', coverX, y, coverW, coverH);
+    y += coverH + 32;
   }
 
   if (summary.mostRiddenItem && summary.mostRiddenItem.times > 1) {
