@@ -3621,12 +3621,31 @@ body {
   color: var(--text-1);
 }
 
-.memories-entry .photo-log-btn {
+
+.memories-add-photo-btn {
   margin-left: 74px;
+  padding: 5px 11px;
+  font-size: 12px;
+}
+
+.memories-card .photo-thumb-strip {
+  margin: 8px 0 4px 74px;
+  gap: 8px;
+}
+
+.memories-card .photo-thumb-btn {
+  width: 92px;
+  height: 92px;
+  border-radius: 14px;
+}
+
+.memories-card .photo-thumb-btn img {
+  object-fit: cover;
 }
 
 @media (max-width: 480px) {
   .todays-log-entry { align-items: flex-start; }
   .photo-log-btn { padding: 3px 7px; }
-  .photo-thumb-strip, .memories-entry .photo-log-btn { margin-left: 0; }
+  .photo-thumb-strip, .memories-add-photo-btn, .memories-card .photo-thumb-strip { margin-left: 0; }
+  .memories-card .photo-thumb-btn { width: 86px; height: 86px; }
 }
