@@ -3485,15 +3485,34 @@ function makeCoverExportDataUrl(img, w = 960, h = 600) {
   return canvas.toDataURL('image/jpeg', 0.88);
 }
 
-function makePhotoMemoryExportDataUrl(img, w = 900, h = 600) {
+function makePhotoMemoryExportData(img, maxLongEdge = 1400) {
+  const sourceW = img.naturalWidth || img.width;
+  const sourceH = img.naturalHeight || img.height;
+  const scale = Math.min(1, maxLongEdge / Math.max(sourceW, sourceH));
+  const w = Math.max(1, Math.round(sourceW * scale));
+  const h = Math.max(1, Math.round(sourceH * scale));
   const canvas = document.createElement('canvas');
   canvas.width = w;
   canvas.height = h;
   const ctx = canvas.getContext('2d');
   ctx.fillStyle = '#f7f6f3';
   ctx.fillRect(0, 0, w, h);
-  drawImageCover(ctx, img, 0, 0, w, h, 0);
-  return canvas.toDataURL('image/jpeg', 0.86);
+  // Preserve the original orientation/aspect ratio for scrapbook pages.
+  ctx.drawImage(img, 0, 0, w, h);
+  return {
+    dataUrl: canvas.toDataURL('image/jpeg', 0.86),
+    width: w,
+    height: h,
+    aspectRatio: w / h,
+  };
+}
+
+function fitPDFImage(image, maxW, maxH) {
+  const scale = Math.min(maxW / image.width, maxH / image.height);
+  return {
+    width: image.width * scale,
+    height: image.height * scale,
+  };
 }
 
 async function buildPDFPhotoMemories(summary, tripId = Storage.getActiveTripId()) {
@@ -3515,25 +3534,24 @@ async function buildPDFPhotoMemories(summary, tripId = Storage.getActiveTripId()
       for (const entry of ps.timeline) {
         const photos = photosByTimelineId[entry.id] || [];
         if (!photos.length) continue;
-        const imageDataUrls = [];
+        const imageData = [];
         for (const photo of photos) {
           const blob = photo.imageBlob || photo.thumbBlob;
           if (!blob) continue;
           try {
             const img = await loadImageFromBlob(blob);
-            imageDataUrls.push(makePhotoMemoryExportDataUrl(img));
+            imageData.push(makePhotoMemoryExportData(img));
           } catch (err) {
             console.warn('Could not prepare photo memory for PDF', err);
           }
         }
-        if (!imageDataUrls.length) continue;
+        if (!imageData.length) continue;
         memories.push({
           parkName: ps.park.name,
-          parkEmoji: ps.park.emoji,
           dateLabel: entry.dateLabel,
           timeLabel: entry.timeLabel,
           name: entry.name + (entry.isExtra ? ' (again)' : ''),
-          imageDataUrls,
+          imageData,
         });
       }
     }
@@ -3584,13 +3602,49 @@ function addPDFPhotoMemoriesSection(doc, memories, pageW, pageH, margin) {
   addTitlePage();
 
   memories.forEach(memory => {
-    const groupLabel = `${memory.dateLabel} · ${memory.parkEmoji} ${memory.parkName}`;
-    const photoCount = memory.imageDataUrls.length;
+    const groupLabel = `${memory.dateLabel} · ${memory.parkName}`;
+    const photoCount = memory.imageData.length;
     const onePhoto = photoCount === 1;
-    const photoW = onePhoto ? cardW - cardPad * 2 : (cardW - cardPad * 2 - gap) / 2;
-    const photoH = onePhoto ? 220 : 144;
-    const rows = onePhoto ? 1 : Math.ceil(photoCount / 2);
-    const cardH = 54 + rows * photoH + (rows - 1) * gap + cardPad;
+    const headerTextW = cardW - cardPad * 2 - 68;
+    const titleLines = doc.splitTextToSize(memory.name, headerTextW).slice(0, 2);
+    const headerH = titleLines.length > 1 ? 70 : 54;
+
+    const imageLayouts = [];
+    if (onePhoto) {
+      const maxPhotoW = cardW - cardPad * 2;
+      const maxPhotoH = memory.imageData[0].aspectRatio < 0.85 ? 330 : 245;
+      const fitted = fitPDFImage(memory.imageData[0], maxPhotoW, maxPhotoH);
+      imageLayouts.push({
+        image: memory.imageData[0],
+        x: margin + cardPad + (maxPhotoW - fitted.width) / 2,
+        yOffset: headerH,
+        width: fitted.width,
+        height: fitted.height,
+      });
+    } else {
+      const maxPhotoW = (cardW - cardPad * 2 - gap) / 2;
+      const maxPhotoH = 210;
+      const rowHeights = [];
+      memory.imageData.forEach((image, idx) => {
+        const row = Math.floor(idx / 2);
+        const col = idx % 2;
+        const fitted = fitPDFImage(image, maxPhotoW, maxPhotoH);
+        rowHeights[row] = Math.max(rowHeights[row] || 0, fitted.height);
+        imageLayouts.push({ image, row, col, width: fitted.width, height: fitted.height });
+      });
+      let yOffset = headerH;
+      rowHeights.forEach((rowH, row) => {
+        imageLayouts.filter(layout => layout.row === row).forEach(layout => {
+          const slotX = margin + cardPad + layout.col * (maxPhotoW + gap);
+          layout.x = slotX + (maxPhotoW - layout.width) / 2;
+          layout.yOffset = yOffset + (rowH - layout.height) / 2;
+        });
+        yOffset += rowH + gap;
+      });
+    }
+
+    const photosH = imageLayouts.reduce((max, layout) => Math.max(max, layout.yOffset + layout.height), headerH) - headerH;
+    const cardH = headerH + photosH + cardPad;
     const needsGroupHeader = groupLabel !== lastGroup;
     const neededH = cardH + (needsGroupHeader ? 26 : 0) + 14;
 
@@ -3603,6 +3657,7 @@ function addPDFPhotoMemoriesSection(doc, memories, pageW, pageH, margin) {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
       doc.setTextColor(184, 118, 31);
+      // jsPDF's built-in fonts do not reliably render emoji, so PDF headings use text-only park names.
       doc.text(groupLabel.toUpperCase(), margin, y);
       y += 20;
       lastGroup = groupLabel;
@@ -3613,23 +3668,17 @@ function addPDFPhotoMemoriesSection(doc, memories, pageW, pageH, margin) {
     doc.roundedRect(margin, y, cardW, cardH, 10, 10, 'FD');
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
+    doc.setFontSize(10);
     doc.setTextColor(150, 150, 150);
     doc.text(memory.timeLabel, margin + cardPad, y + 25);
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
+    doc.setFontSize(titleLines.length > 1 ? 10.5 : 11.5);
     doc.setTextColor(35, 32, 28);
-    const safeName = memory.name.length > 58 ? memory.name.slice(0, 55) + '...' : memory.name;
-    doc.text(safeName, margin + cardPad + 64, y + 25);
+    doc.text(titleLines, margin + cardPad + 64, y + 25, { lineHeightFactor: 1.15 });
 
-    let imgY = y + 42;
-    memory.imageDataUrls.forEach((dataUrl, idx) => {
-      const col = onePhoto ? 0 : idx % 2;
-      const row = onePhoto ? 0 : Math.floor(idx / 2);
-      const imgX = margin + cardPad + col * (photoW + gap);
-      const currentY = imgY + row * (photoH + gap);
-      doc.addImage(dataUrl, 'JPEG', imgX, currentY, photoW, photoH);
+    imageLayouts.forEach(layout => {
+      doc.addImage(layout.image.dataUrl, 'JPEG', layout.x, y + layout.yOffset, layout.width, layout.height);
     });
 
     y += cardH + 14;
@@ -3914,10 +3963,12 @@ async function exportRecapPDF() {
     .filter(([, c]) => c > 0)
     .map(([cat, c]) => `${CAT_LABELS[cat]}: ${c}`)
     .join('    ·    ');
-  doc.setFontSize(12);
+  doc.setFontSize(coverDataUrl ? 10.5 : 12);
   doc.setTextColor(70, 70, 70);
-  doc.text(catLine, margin, y);
-  y += 30;
+  const catMaxW = coverDataUrl ? pageW - margin * 2 - 220 : pageW - margin * 2;
+  const catLines = doc.splitTextToSize(catLine, catMaxW);
+  doc.text(catLines, margin, y, { lineHeightFactor: 1.25 });
+  y += 18 * catLines.length + 12;
 
   if (summary.mostRiddenItem && summary.mostRiddenItem.times > 1) {
     doc.setFillColor(251, 238, 226);
@@ -3970,10 +4021,11 @@ async function exportRecapPDF() {
       .filter(([, c]) => c > 0)
       .map(([cat, c]) => `${CAT_LABELS[cat]}: ${c}`)
       .join('    ·    ');
-    doc.setFontSize(12);
+    doc.setFontSize(11);
     doc.setTextColor(70, 70, 70);
-    doc.text(breakdown || 'No activities logged', margin, y);
-    y += 28;
+    const breakdownLines = doc.splitTextToSize(breakdown || 'No activities logged', pageW - margin * 2);
+    doc.text(breakdownLines, margin, y, { lineHeightFactor: 1.25 });
+    y += 14 * breakdownLines.length + 14;
 
     doc.setDrawColor(225, 225, 225);
     doc.line(margin, y, pageW - margin, y);
@@ -4004,11 +4056,13 @@ async function exportRecapPDF() {
         doc.setFontSize(11);
       }
       const label = entry.isExtra ? `${entry.name} (again)` : entry.name;
+      const labelLines = doc.splitTextToSize(label, pageW - margin * 2 - 75);
+      if (y + labelLines.length * 14 > pageH - margin) { doc.addPage(); y = margin; }
       doc.setTextColor(150, 150, 150);
       doc.text(entry.timeLabel, margin, y);
       doc.setTextColor(40, 40, 40);
-      doc.text(label, margin + 65, y);
-      y += 18;
+      doc.text(labelLines, margin + 65, y, { lineHeightFactor: 1.2 });
+      y += Math.max(18, labelLines.length * 14 + 4);
     });
 
     if (ps.timeline.length === 0) {
