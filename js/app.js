@@ -3429,6 +3429,15 @@ function loadImageFromBlob(blob) {
   });
 }
 
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error || new Error('Could not read photo'));
+    reader.readAsDataURL(blob);
+  });
+}
+
 async function getActiveTripCoverImage() {
   try {
     const cover = await PhotoStore.getTripCover();
@@ -3474,6 +3483,157 @@ function makeCoverExportDataUrl(img, w = 960, h = 600) {
   ctx.fillRect(0, 0, w, h);
   drawImageCover(ctx, img, 0, 0, w, h, 0);
   return canvas.toDataURL('image/jpeg', 0.88);
+}
+
+function makePhotoMemoryExportDataUrl(img, w = 900, h = 600) {
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#f7f6f3';
+  ctx.fillRect(0, 0, w, h);
+  drawImageCover(ctx, img, 0, 0, w, h, 0);
+  return canvas.toDataURL('image/jpeg', 0.86);
+}
+
+async function buildPDFPhotoMemories(summary, tripId = Storage.getActiveTripId()) {
+  try {
+    const allPhotos = await PhotoStore.getAll();
+    const memoryPhotos = allPhotos
+      .filter(p => p.tripId === tripId && p.photoType !== 'tripCover' && p.timelineEntryId)
+      .sort((a, b) => a.createdAt - b.createdAt);
+    if (!memoryPhotos.length) return [];
+
+    const photosByTimelineId = memoryPhotos.reduce((map, photo) => {
+      if (!map[photo.timelineEntryId]) map[photo.timelineEntryId] = [];
+      map[photo.timelineEntryId].push(photo);
+      return map;
+    }, {});
+
+    const memories = [];
+    for (const ps of summary.parkSummaries) {
+      for (const entry of ps.timeline) {
+        const photos = photosByTimelineId[entry.id] || [];
+        if (!photos.length) continue;
+        const imageDataUrls = [];
+        for (const photo of photos) {
+          const blob = photo.imageBlob || photo.thumbBlob;
+          if (!blob) continue;
+          try {
+            const img = await loadImageFromBlob(blob);
+            imageDataUrls.push(makePhotoMemoryExportDataUrl(img));
+          } catch (err) {
+            console.warn('Could not prepare photo memory for PDF', err);
+          }
+        }
+        if (!imageDataUrls.length) continue;
+        memories.push({
+          parkName: ps.park.name,
+          parkEmoji: ps.park.emoji,
+          dateLabel: entry.dateLabel,
+          timeLabel: entry.timeLabel,
+          name: entry.name + (entry.isExtra ? ' (again)' : ''),
+          imageDataUrls,
+        });
+      }
+    }
+    return memories;
+  } catch (err) {
+    console.warn('Could not add photo memories to PDF', err);
+    return [];
+  }
+}
+
+function addPDFPhotoMemoriesSection(doc, memories, pageW, pageH, margin) {
+  if (!memories || memories.length === 0) return;
+
+  const cardW = pageW - margin * 2;
+  const cardPad = 14;
+  const gap = 10;
+  let y = margin;
+  let lastGroup = '';
+
+  const addTitlePage = () => {
+    doc.addPage();
+    y = margin;
+    doc.setFont('times', 'normal');
+    doc.setFontSize(26);
+    doc.setTextColor(30, 28, 24);
+    doc.text('Photo Memories', margin, y);
+    y += 18;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    doc.setTextColor(110, 110, 110);
+    doc.text('Photos attached to your logged rides, shows, food stops, and character meets.', margin, y + 16);
+    y += 50;
+    doc.setDrawColor(225, 225, 225);
+    doc.line(margin, y, pageW - margin, y);
+    y += 26;
+  };
+
+  const addContinuationPage = () => {
+    doc.addPage();
+    y = margin;
+    doc.setFont('times', 'normal');
+    doc.setFontSize(22);
+    doc.setTextColor(30, 28, 24);
+    doc.text('Photo Memories', margin, y);
+    y += 30;
+  };
+
+  addTitlePage();
+
+  memories.forEach(memory => {
+    const groupLabel = `${memory.dateLabel} · ${memory.parkEmoji} ${memory.parkName}`;
+    const photoCount = memory.imageDataUrls.length;
+    const onePhoto = photoCount === 1;
+    const photoW = onePhoto ? cardW - cardPad * 2 : (cardW - cardPad * 2 - gap) / 2;
+    const photoH = onePhoto ? 220 : 144;
+    const rows = onePhoto ? 1 : Math.ceil(photoCount / 2);
+    const cardH = 54 + rows * photoH + (rows - 1) * gap + cardPad;
+    const needsGroupHeader = groupLabel !== lastGroup;
+    const neededH = cardH + (needsGroupHeader ? 26 : 0) + 14;
+
+    if (y + neededH > pageH - margin - 34) {
+      addContinuationPage();
+      lastGroup = '';
+    }
+
+    if (groupLabel !== lastGroup) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(184, 118, 31);
+      doc.text(groupLabel.toUpperCase(), margin, y);
+      y += 20;
+      lastGroup = groupLabel;
+    }
+
+    doc.setFillColor(247, 246, 243);
+    doc.setDrawColor(230, 226, 220);
+    doc.roundedRect(margin, y, cardW, cardH, 10, 10, 'FD');
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    doc.setTextColor(150, 150, 150);
+    doc.text(memory.timeLabel, margin + cardPad, y + 25);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(35, 32, 28);
+    const safeName = memory.name.length > 58 ? memory.name.slice(0, 55) + '...' : memory.name;
+    doc.text(safeName, margin + cardPad + 64, y + 25);
+
+    let imgY = y + 42;
+    memory.imageDataUrls.forEach((dataUrl, idx) => {
+      const col = onePhoto ? 0 : idx % 2;
+      const row = onePhoto ? 0 : Math.floor(idx / 2);
+      const imgX = margin + cardPad + col * (photoW + gap);
+      const currentY = imgY + row * (photoH + gap);
+      doc.addImage(dataUrl, 'JPEG', imgX, currentY, photoW, photoH);
+    });
+
+    y += cardH + 14;
+  });
 }
 
 // ── Recap canvas renderer (shared layout logic for JPEG export) ────────────
@@ -3722,6 +3882,7 @@ async function exportRecapPDF() {
   const CAT_LABELS = { rides: 'Rides', show: 'Shows', food: 'Food & drink', character: 'Character meets' };
   const coverImage = await getActiveTripCoverImage();
   const coverDataUrl = coverImage ? makeCoverExportDataUrl(coverImage) : null;
+  const photoMemories = await buildPDFPhotoMemories(summary, Storage.getActiveTripId());
 
   // ── Overview page ──
   doc.setFont('helvetica', 'bold');
@@ -3888,6 +4049,9 @@ async function exportRecapPDF() {
     }
   });
 
+  // ── Optional photo memories scrapbook pages ──
+  addPDFPhotoMemoriesSection(doc, photoMemories, pageW, pageH, margin);
+
   // Footer disclaimer on every page
   const pageCount = doc.internal.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
@@ -4033,6 +4197,9 @@ function exportMasterListPDF() {
     doc.text(`${entry.totalTimes}×`, pageW - margin - 40, y);
     y += 18;
   });
+
+  // ── Optional photo memories scrapbook pages ──
+  addPDFPhotoMemoriesSection(doc, photoMemories, pageW, pageH, margin);
 
   // Footer disclaimer on every page
   const pageCount = doc.internal.getNumberOfPages();
