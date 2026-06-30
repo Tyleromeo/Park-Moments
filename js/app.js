@@ -171,16 +171,16 @@ function pickImageFile() {
   });
 }
 
-function getLatestTimelineEntryForItem(itemId) {
-  const timeline = Storage.ensureTimelineEntryIds ? Storage.ensureTimelineEntryIds() : [];
+function getLatestTimelineEntryForItem(itemId, tripId = Storage.getActiveTripId()) {
+  const timeline = Storage.ensureTimelineEntryIds ? Storage.ensureTimelineEntryIds(tripId) : [];
   return [...timeline].reverse().find(e => e.itemId === itemId) || null;
 }
 
-async function addPhotoToTimelineEntry(timelineEntryId, itemId) {
+async function addPhotoToTimelineEntry(timelineEntryId, itemId, tripId = Storage.getActiveTripId()) {
   try {
     const file = await pickImageFile();
     if (!file) return;
-    await PhotoStore.addPhoto(file, { timelineEntryId, itemId });
+    await PhotoStore.addPhoto(file, { tripId, timelineEntryId, itemId });
     showToast('Photo added 📷');
     refreshPhotoUI(document);
     if (currentView === 'resorts') renderResortScreen();
@@ -189,24 +189,25 @@ async function addPhotoToTimelineEntry(timelineEntryId, itemId) {
   }
 }
 
-async function addPhotoToItem(itemId) {
-  const entry = getLatestTimelineEntryForItem(itemId);
+async function addPhotoToItem(itemId, tripId = Storage.getActiveTripId()) {
+  const entry = getLatestTimelineEntryForItem(itemId, tripId);
   if (!entry) {
     showToast('Check this off first, then add a photo.', { wrap: true, duration: 2800 });
     return;
   }
-  await addPhotoToTimelineEntry(entry.id, itemId);
+  await addPhotoToTimelineEntry(entry.id, itemId, tripId);
 }
 
-async function setTripCoverPhoto() {
+async function setTripCoverPhoto(tripId = Storage.getActiveTripId(), returnTo = 'trips') {
   try {
     const file = await pickImageFile();
     if (!file) return;
-    await PhotoStore.addPhoto(file, { photoType: 'tripCover' });
+    await PhotoStore.addPhoto(file, { tripId, photoType: 'tripCover' });
     showToast('Trip cover photo saved 📷');
     document.querySelector('.modal-overlay')?.remove();
     document.body.style.overflow = '';
-    openTripsModal();
+    if (returnTo === 'memories') openTripMemoriesModal(tripId);
+    else openTripsModal();
   } catch (err) {
     showToast(err.message || 'Could not save that cover photo.', { wrap: true, duration: 3400 });
   }
@@ -259,9 +260,9 @@ function bindPhotoButtons(root = document) {
       e.preventDefault();
       e.stopPropagation();
       if (btn.classList.contains('photo-has-count')) {
-        openPhotoMemoryModal({ timelineEntryId: btn.dataset.timelineId, itemId: btn.dataset.itemId });
+        openPhotoMemoryModal({ timelineEntryId: btn.dataset.timelineId, itemId: btn.dataset.itemId, tripId: btn.dataset.tripId || Storage.getActiveTripId() });
       } else {
-        addPhotoToTimelineEntry(btn.dataset.timelineId, btn.dataset.itemId);
+        addPhotoToTimelineEntry(btn.dataset.timelineId, btn.dataset.itemId, btn.dataset.tripId || Storage.getActiveTripId());
       }
     });
   });
@@ -271,9 +272,9 @@ function bindPhotoButtons(root = document) {
       e.preventDefault();
       e.stopPropagation();
       if (btn.classList.contains('photo-has-count')) {
-        openPhotoMemoryModal({ itemId: btn.dataset.itemId });
+        openPhotoMemoryModal({ itemId: btn.dataset.itemId, tripId: btn.dataset.tripId || Storage.getActiveTripId() });
       } else {
-        addPhotoToItem(btn.dataset.itemId);
+        addPhotoToItem(btn.dataset.itemId, btn.dataset.tripId || Storage.getActiveTripId());
       }
     });
   });
@@ -281,19 +282,19 @@ function bindPhotoButtons(root = document) {
   root.querySelectorAll('.trip-cover-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
-      setTripCoverPhoto();
+      setTripCoverPhoto(btn.dataset.tripId || Storage.getActiveTripId(), btn.dataset.returnTo || 'trips');
     });
   });
 }
 
-async function openPhotoMemoryModal({ timelineEntryId = null, itemId = null } = {}) {
-  const activeTripId = Storage.getActiveTripId();
+async function openPhotoMemoryModal({ timelineEntryId = null, itemId = null, tripId = Storage.getActiveTripId() } = {}) {
+  const activeTripId = tripId || Storage.getActiveTripId();
   const all = await PhotoStore.getAll();
   let photos = [];
   if (timelineEntryId) photos = all.filter(p => p.timelineEntryId === timelineEntryId);
   else if (itemId) photos = all.filter(p => p.tripId === activeTripId && p.itemId === itemId && p.photoType !== 'tripCover');
 
-  const entry = timelineEntryId && Storage.getTimelineEntry ? Storage.getTimelineEntry(timelineEntryId) : null;
+  const entry = timelineEntryId && Storage.getTimelineEntry ? Storage.getTimelineEntry(timelineEntryId, activeTripId) : null;
   const item = itemId ? findItemById(itemId) : (entry ? findItemById(entry.itemId) : null);
 
   const overlay = document.createElement('div');
@@ -323,8 +324,8 @@ async function openPhotoMemoryModal({ timelineEntryId = null, itemId = null } = 
   overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
 
   overlay.querySelector('.photo-add-large-btn').addEventListener('click', async () => {
-    if (timelineEntryId) await addPhotoToTimelineEntry(timelineEntryId, itemId || (entry && entry.itemId));
-    else if (itemId) await addPhotoToItem(itemId);
+    if (timelineEntryId) await addPhotoToTimelineEntry(timelineEntryId, itemId || (entry && entry.itemId), activeTripId);
+    else if (itemId) await addPhotoToItem(itemId, activeTripId);
     close();
   });
 
@@ -333,7 +334,7 @@ async function openPhotoMemoryModal({ timelineEntryId = null, itemId = null } = 
       await PhotoStore.delete(btn.dataset.photoId);
       showToast('Photo removed');
       close();
-      openPhotoMemoryModal({ timelineEntryId, itemId });
+      openPhotoMemoryModal({ timelineEntryId, itemId, tripId: activeTripId });
     });
   });
 
@@ -350,11 +351,17 @@ function findItemById(id) {
   return null;
 }
 
-async function openTripMemoriesModal() {
-  const summary = Storage.getTripSummary();
-  const cover = await PhotoStore.getTripCover();
+async function openTripMemoriesModal(selectedTripId = Storage.getActiveTripId()) {
+  const trips = Storage.listTrips();
+  const activeTripId = Storage.getActiveTripId();
+  const viewingTripId = selectedTripId || activeTripId;
+  const viewingTrip = trips.find(t => t.id === viewingTripId) || trips[0];
+  const tripId = viewingTrip ? viewingTrip.id : activeTripId;
+  const summary = Storage.getTripSummary(tripId);
+  const cover = await PhotoStore.getTripCover(tripId);
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
+
   const timelineHtml = summary.parkSummaries.map(ps => {
     if (!ps.timeline.length) return '';
     return `
@@ -367,7 +374,7 @@ async function openTripMemoriesModal() {
               <span class="memories-time">${entry.timeLabel}</span>
               <span class="memories-name">${entry.name}${entry.isExtra ? ' <span class="todays-log-again">(again)</span>' : ''}</span>
             </div>
-            <button class="photo-log-btn memories-add-photo-btn" data-timeline-id="${entry.id}" data-item-id="${entry.itemId}">Add photo</button>
+            <button class="photo-log-btn memories-add-photo-btn" data-trip-id="${tripId}" data-timeline-id="${entry.id}" data-item-id="${entry.itemId}">Add photo</button>
             <div class="photo-thumb-strip" data-timeline-id="${entry.id}"></div>
           </div>
         `).join('')}
@@ -382,11 +389,15 @@ async function openTripMemoriesModal() {
         <button class="modal-close" aria-label="Close">✕</button>
       </div>
       <p class="modal-subtitle">Attach photos to the moments you logged. Local beta: <span data-photo-count></span> photos used.</p>
-      <button class="trip-cover-btn trip-cover-row">
-        <span class="trip-cover-preview">${cover ? `<img alt="Trip cover" src="${URL.createObjectURL(cover.thumbBlob)}">` : '<span>📷</span>'}</span>
-        <span><strong>Trip cover photo</strong><small>${cover ? 'Tap to replace' : 'Add a cover for this trip'}</small></span>
+      <label class="memories-trip-picker-label" for="memories-trip-picker">Viewing trip</label>
+      <select class="memories-trip-picker" id="memories-trip-picker">
+        ${trips.map(trip => `<option value="${trip.id}" ${trip.id === tripId ? 'selected' : ''}>${trip.name} — ${new Date(trip.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</option>`).join('')}
+      </select>
+      <button class="trip-cover-btn trip-cover-row" data-trip-id="${tripId}" data-return-to="memories">
+        <span class="trip-cover-preview" data-trip-id="${tripId}">${cover ? `<img alt="Trip cover" src="${URL.createObjectURL(cover.thumbBlob)}">` : '<span>📷</span>'}</span>
+        <span><strong>Trip cover photo</strong><small>${cover ? 'Tap to replace for this trip' : 'Add a cover for this trip'}</small></span>
       </button>
-      ${timelineHtml || '<p class="photo-empty">Nothing logged yet — check off a few rides, shows, or food spots first.</p>'}
+      ${timelineHtml || '<p class="photo-empty">Nothing logged for this trip yet — choose another trip or check off a few rides, shows, or food spots first.</p>'}
     </div>
   `;
   document.body.appendChild(overlay);
@@ -395,6 +406,11 @@ async function openTripMemoriesModal() {
   const close = () => { overlay.remove(); document.body.style.overflow = ''; };
   overlay.querySelector('.modal-close').addEventListener('click', close);
   overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  overlay.querySelector('#memories-trip-picker')?.addEventListener('change', e => {
+    const nextTripId = e.target.value;
+    close();
+    openTripMemoriesModal(nextTripId);
+  });
   bindPhotoButtons(overlay);
   refreshPhotoUI(overlay);
 }

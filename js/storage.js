@@ -142,22 +142,29 @@ const Storage = {
   },
 
   // ── Internal: get/save the current trip's data blob ──────────────────
-  _getTripData() {
-    const tripId = this.ensureActiveTrip();
+  _normalizeTripData(data) {
+    if (!data) data = emptyTripData();
+    // Migration safety net: trips created before newer features existed won't
+    // have these fields yet — backfill them so nothing breaks.
+    if (!data.timeline) data.timeline = [];
+    if (!data.showtimes) data.showtimes = {};
+    if (!data.hoursOverride) data.hoursOverride = {};
+    if (!data.starOrder) data.starOrder = {};
+    if (!data.checks) data.checks = {};
+    if (!data.counts) data.counts = {};
+    if (!data.songs) data.songs = {};
+    if (!data.stars) data.stars = {};
+    if (!data.notes) data.notes = {};
+    return data;
+  },
+  _getTripData(tripId = this.ensureActiveTrip()) {
     const allData = this.getAllTripsData();
     if (!allData[tripId]) allData[tripId] = emptyTripData();
-    // Migration safety net: trips created before the timeline feature
-    // existed won't have this field yet — backfill it so nothing breaks.
-    if (!allData[tripId].timeline) allData[tripId].timeline = [];
-    if (!allData[tripId].showtimes) allData[tripId].showtimes = {};
-    if (!allData[tripId].hoursOverride) allData[tripId].hoursOverride = {};
-    if (!allData[tripId].starOrder) allData[tripId].starOrder = {};
-    return allData[tripId];
+    return this._normalizeTripData(allData[tripId]);
   },
-  _saveTripData(data) {
-    const tripId = this.ensureActiveTrip();
+  _saveTripData(data, tripId = this.ensureActiveTrip()) {
     const allData = this.getAllTripsData();
-    allData[tripId] = data;
+    allData[tripId] = this._normalizeTripData(data);
     this.saveAllTripsData(allData);
   },
 
@@ -166,10 +173,9 @@ const Storage = {
   // Ensures every timeline entry has a stable id for attaching local photo memories.
   // Older Rope Drop trips may have entries created before ids existed, so this quietly
   // upgrades the active trip the next time it is viewed.
-  ensureTimelineEntryIds() {
-    const tripId = this.ensureActiveTrip();
+  ensureTimelineEntryIds(tripId = this.ensureActiveTrip()) {
     const allData = this.getAllTripsData();
-    const data = allData[tripId] || emptyTripData();
+    const data = this._normalizeTripData(allData[tripId] || emptyTripData());
     if (!Array.isArray(data.timeline)) data.timeline = [];
     let changed = false;
     data.timeline.forEach(entry => {
@@ -178,16 +184,16 @@ const Storage = {
         changed = true;
       }
     });
-    if (changed) {
+    if (changed || !allData[tripId]) {
       allData[tripId] = data;
       this.saveAllTripsData(allData);
     }
     return data.timeline;
   },
 
-  getTimelineEntry(entryId) {
+  getTimelineEntry(entryId, tripId = this.ensureActiveTrip()) {
     if (!entryId) return null;
-    const timeline = this.ensureTimelineEntryIds();
+    const timeline = this.ensureTimelineEntryIds(tripId);
     return timeline.find(entry => entry.id === entryId) || null;
   },
 
@@ -781,8 +787,8 @@ const Storage = {
     };
   },
 
-  getTripSummary() {
-    const meta = this.getAllTrips()[this.getActiveTripId()];
+  getTripSummary(tripId = this.getActiveTripId()) {
+    const meta = this.getAllTrips()[tripId];
     const tripName = meta ? meta.name : 'My Disney Trip';
 
     const parkSummaries = [];
@@ -791,10 +797,11 @@ const Storage = {
     let mostRiddenItem = null; // { name, times }
     let totalUniqueChecked = 0;
 
-    const checks = this.getChecked();
-    const counts = this.getCounts();
-    const songs = this.getSongs ? this.getSongs() : (this._getTripData().songs || {});
-    const timeline = this.ensureTimelineEntryIds();
+    const tripData = this._getTripData(tripId);
+    const checks = tripData.checks || {};
+    const counts = tripData.counts || {};
+    const songs = tripData.songs || {};
+    const timeline = this.ensureTimelineEntryIds(tripId);
 
     // Build a quick lookup from itemId -> the park it belongs to, so
     // timeline entries (which only know itemId) can be grouped by park.
@@ -804,7 +811,14 @@ const Storage = {
     })));
 
     PARKS.forEach(park => {
-      const tally = this.getActivityTally(park.id);
+      const tally = { total: 0, byCategory: { rides: 0, show: 0, food: 0, character: 0 } };
+      park.sections.forEach(section => section.items.forEach(item => {
+        if (!checks[item.id]) return;
+        const times = 1 + (counts[item.id] || 0);
+        tally.total += times;
+        if (tally.byCategory[item.badge] !== undefined) tally.byCategory[item.badge] += times;
+        else if (item.badge === 'thrill' || item.badge === 'family') tally.byCategory.rides += times;
+      }));
       if (tally.total === 0) return; // skip parks with no activity at all
 
       const checkedItems = [];

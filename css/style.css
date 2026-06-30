@@ -3664,3 +3664,31 @@ body {
 .badge-scope-note strong {
   color: var(--text-1);
 }
+
+/* Trip Memories trip selector */
+.memories-trip-picker-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 12px 0 6px;
+}
+
+.memories-trip-picker {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-md);
+  background: var(--bg-2);
+  color: var(--text-1);
+  font-size: 13px;
+  font-family: var(--font-body);
+  margin-bottom: 12px;
+}
+
+.memories-trip-picker:focus {
+  outline: 2px solid #1a6fd4;
+  outline-offset: 2px;
+}
