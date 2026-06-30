@@ -162,11 +162,31 @@ function pickImageFile() {
     input.accept = 'image/*';
     input.style.display = 'none';
     document.body.appendChild(input);
-    input.addEventListener('change', () => {
-      const file = input.files && input.files[0] ? input.files[0] : null;
+
+    let settled = false;
+    let focusTimer = null;
+    const cleanup = (file = null) => {
+      if (settled) return;
+      settled = true;
+      if (focusTimer) clearTimeout(focusTimer);
+      window.removeEventListener('focus', handleFocus);
       input.remove();
       resolve(file);
+    };
+    const handleFocus = () => {
+      focusTimer = setTimeout(() => {
+        if (!input.files || input.files.length === 0) cleanup(null);
+      }, 500);
+    };
+
+    input.addEventListener('change', () => {
+      const file = input.files && input.files[0] ? input.files[0] : null;
+      cleanup(file);
     }, { once: true });
+    input.addEventListener('cancel', () => {
+      cleanup(null);
+    }, { once: true });
+    window.addEventListener('focus', handleFocus);
     input.click();
   });
 }

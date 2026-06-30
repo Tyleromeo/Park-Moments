@@ -2689,6 +2689,35 @@ body {
   flex-shrink: 0;
 }
 
+@media (max-width: 480px) {
+  .must-do-wrap .item-row {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 4px;
+    align-items: start;
+  }
+
+  .must-do-wrap .remove-must-btn {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+
+  .must-do-wrap .item {
+    grid-column: 2;
+    width: 100%;
+    min-width: 0;
+    padding-right: 8px;
+  }
+
+  .must-do-wrap .item-extras {
+    grid-column: 2;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    max-width: 100%;
+    margin-top: 2px;
+  }
+}
+
 .count-stepper {
   display: flex;
   align-items: center;
